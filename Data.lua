@@ -7,6 +7,7 @@ Oak.roleAtlases = {
     HEALER = "groupfinder-icon-role-micro-heal",
     DAMAGER = "groupfinder-icon-role-micro-dps",
 }
+Oak.classArmor = { WARRIOR="Plate", PALADIN="Plate", DEATHKNIGHT="Plate", HUNTER="Mail", SHAMAN="Mail", ROGUE="Leather", DRUID="Leather", MONK="Leather", DEMONHUNTER="Leather", PRIEST="Cloth", MAGE="Cloth", WARLOCK="Cloth" }
 
 function Oak.ReadResult(id)
     local info = C_LFGList.GetSearchResultInfo(id)
@@ -32,6 +33,7 @@ function Oak.ReadResult(id)
     local result = {
         id = id, name = info.leaderName or RETRIEVING_DATA,
         class = player and player.classFilename,
+        armor = player and Oak.classArmor[player.classFilename],
         level = solo and player and player.level or 0,
         size = info.numMembers, kind = solo and "Player" or "Group",
         activity = table.concat(activities, ", "), note = info.comment or "",
@@ -46,6 +48,8 @@ function Oak.Matches(result, filters)
     if not result.hasSelf then
         if filters.kind ~= "All" and filters.kind ~= result.kind then return false end
         if filters.role ~= "ALL" and result.roles[filters.role] == 0 then return false end
+        if filters.classes and next(filters.classes) and not filters.classes[result.class] then return false end
+        if filters.armor and next(filters.armor) and not filters.armor[result.armor] then return false end
         if filters.friendly and not result.friendly then return false end
         if filters.text ~= "" and not result.searchText:find(string.lower(filters.text), 1, true) then return false end
     end

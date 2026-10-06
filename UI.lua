@@ -111,6 +111,19 @@ function Oak.ShowOptions(owner)
         end)
         menu:CreateButton("Custom whisper message", Oak.ShowWhisperSettings)
         menu:CreateButton("Supporters", Oak.ShowSupporters)
+        menu:CreateTitle("Class filters")
+        for _, class in ipairs({ "WARRIOR", "PALADIN", "DEATHKNIGHT", "HUNTER", "SHAMAN", "ROGUE", "DRUID", "MONK", "DEMONHUNTER", "PRIEST", "MAGE", "WARLOCK" }) do
+            local info = RAID_CLASS_COLORS[class]
+            menu:CreateCheckbox(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class] or class, function() return Oak.filters.classes[class] end, function()
+                Oak.filters.classes[class] = not Oak.filters.classes[class]; Oak.Refilter()
+            end)
+        end
+        menu:CreateTitle("Armor filters")
+        for _, armor in ipairs({ "Cloth", "Leather", "Mail", "Plate" }) do
+            menu:CreateCheckbox(armor, function() return Oak.filters.armor[armor] end, function()
+                Oak.filters.armor[armor] = not Oak.filters.armor[armor]; Oak.Refilter()
+            end)
+        end
         menu:CreateCheckbox("New-player-friendly listings only", function() return Oak.filters.friendly end, function()
             Oak.filters.friendly = not Oak.filters.friendly
             Oak.Refilter()
@@ -299,6 +312,7 @@ function Oak.BuildUI()
     end
     Button(frame, "Clear filters", 136, 508, -76, function()
         Oak.filters.kind, Oak.filters.role, Oak.filters.friendly = "All", "ALL", false
+        wipe(Oak.filters.classes); wipe(Oak.filters.armor)
         frame.search:SetText("")
         Oak.Refilter()
     end)
