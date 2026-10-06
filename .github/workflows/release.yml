@@ -26,6 +26,13 @@ jobs:
         with:
           name: OakLFGSorterForever
           path: dist/*.zip
+  announce:
+    needs: release
+    uses: ./.github/workflows/discord-release.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: validate
