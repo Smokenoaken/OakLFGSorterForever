@@ -1,5 +1,5 @@
 package-as: OakLFGSorterForever
-manual-changelog: CHANGELOG.md
+manual-changelog: RELEASE_NOTES.md
 license-output: LICENSE
 ignore:
   - .github

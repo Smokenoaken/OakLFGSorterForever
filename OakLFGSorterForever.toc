@@ -2,7 +2,7 @@
 ## Title: |cffe03d02OAK|r LFG Sorter - Forever
 ## Notes: A compact, sortable browser for Forever players and groups.
 ## Author: Oakensoul
-## Version: 0.1.2
+## Version: 0.1.3
 ## X-Curse-Project-ID: 1729476
 ## X-Wago-ID: rNkg0BNa
 ## SavedVariables: OakLFGSorterForeverDB

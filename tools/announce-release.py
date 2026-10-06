@@ -13,7 +13,7 @@ def payload_for(release):
     sections = re.split(r'(?m)^#{1,2}\s+v?', release.get('body') or '')
     notes = next((s.split('\n', 1)[1].strip() for s in sections
                   if '\n' in s and s.split('\n', 1)[0].strip() == tag.removeprefix('v')),
-                 'See the GitHub release for details.')
+                 (release.get('body') or 'See the GitHub release for details.').strip())
     return {
         'username': 'Oak LFG Sorter Forever Releases',
         'allowed_mentions': {'parse': []},
