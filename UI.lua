@@ -156,9 +156,21 @@ function Oak.ShowSupporters()
     panel:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 }); panel:SetBackdropColor(0.04, 0.04, 0.04, 0.98); panel:SetBackdropBorderColor(0.4, 0.65, 0.8, 1)
     local title = Text(panel, 14); title:SetPoint("TOP", 0, -14); title:SetText("Oak LFG Sorter supporters")
     local body = Text(panel, 11); body:SetPoint("TOPLEFT", 18, -44); body:SetPoint("TOPRIGHT", -18, -44); body:SetJustifyH("LEFT"); body:SetWordWrap(true)
-    body:SetText("Thank you to everyone who supports Oak addons and helps test the Forever client.\\n\\nSupport Oak: Patreon.com/Oakensoul\\nDiscord: discord.gg/FRGUFaEEVd\\n\\nCurrent supporter names are maintained with the addon release.")
+    body:SetText("Thank you to everyone who supports Oak addons and helps test the Forever client.\n\nCurrent supporters:\n" .. table.concat(Oak.Patreons or {}, ", ") .. "\n\nSupport Oak with the links below.")
+    for index, social in ipairs(Oak.Socials or {}) do
+        local button = Button(panel, social.name, 92, 12 + ((index - 1) % 4) * 92, -320 - math.floor((index - 1) / 4) * 25, function()
+            StaticPopup_Show("OAK_LFG_FOREVER_URL", "", "", social.url)
+        end)
+    end
     Button(panel, "Close", 100, 140, -350, function() panel:Hide() end); panel:Show()
 end
+
+StaticPopupDialogs["OAK_LFG_FOREVER_URL"] = {
+    text = "Press Ctrl+C to copy the link",
+    hasEditBox = 1, button1 = OKAY, timeout = 0, whileDead = 1, hideOnEscape = 1,
+    OnShow = function(self, data) local edit = self.editBox or _G[self:GetName() .. "EditBox"]; if edit then edit:SetText(data or ""); edit:HighlightText(); edit:SetFocus() end end,
+    EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
+}
 
 function Oak.ShowClassArmor()
     if Oak.classArmorPanel then Oak.classArmorPanel:SetShown(not Oak.classArmorPanel:IsShown()); return end
