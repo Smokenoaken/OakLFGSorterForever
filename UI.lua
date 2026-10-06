@@ -110,20 +110,6 @@ function Oak.ShowOptions(owner)
             Oak.InstallAutoOpen()
         end)
         menu:CreateButton("Custom whisper message", Oak.ShowWhisperSettings)
-        menu:CreateButton("Supporters", Oak.ShowSupporters)
-        menu:CreateTitle("Class filters")
-        for _, class in ipairs({ "WARRIOR", "PALADIN", "DEATHKNIGHT", "HUNTER", "SHAMAN", "ROGUE", "DRUID", "MONK", "DEMONHUNTER", "PRIEST", "MAGE", "WARLOCK" }) do
-            local info = RAID_CLASS_COLORS[class]
-            menu:CreateCheckbox(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class] or class, function() return Oak.filters.classes[class] end, function()
-                Oak.filters.classes[class] = not Oak.filters.classes[class]; Oak.Refilter()
-            end)
-        end
-        menu:CreateTitle("Armor filters")
-        for _, armor in ipairs({ "Cloth", "Leather", "Mail", "Plate" }) do
-            menu:CreateCheckbox(armor, function() return Oak.filters.armor[armor] end, function()
-                Oak.filters.armor[armor] = not Oak.filters.armor[armor]; Oak.Refilter()
-            end)
-        end
         menu:CreateCheckbox("New-player-friendly listings only", function() return Oak.filters.friendly end, function()
             Oak.filters.friendly = not Oak.filters.friendly
             Oak.Refilter()
@@ -143,6 +129,7 @@ function Oak.ShowOptions(owner)
             end)
         end
         menu:CreateButton("Reset position", Oak.ResetPosition)
+        menu:CreateButton("Supporters", Oak.ShowSupporters)
     end)
 end
 
@@ -171,6 +158,26 @@ function Oak.ShowSupporters()
     local body = Text(panel, 11); body:SetPoint("TOPLEFT", 18, -44); body:SetPoint("TOPRIGHT", -18, -44); body:SetJustifyH("LEFT"); body:SetWordWrap(true)
     body:SetText("Thank you to everyone who supports Oak addons and helps test the Forever client.\\n\\nSupport Oak: Patreon.com/Oakensoul\\nDiscord: discord.gg/FRGUFaEEVd\\n\\nCurrent supporter names are maintained with the addon release.")
     Button(panel, "Close", 100, 140, -350, function() panel:Hide() end); panel:Show()
+end
+
+function Oak.ShowClassArmor()
+    if Oak.classArmorPanel then Oak.classArmorPanel:SetShown(not Oak.classArmorPanel:IsShown()); return end
+    local panel = CreateFrame("Frame", nil, Oak.frame, "BackdropTemplate"); Oak.classArmorPanel = panel
+    panel:SetSize(220, 360); panel:SetPoint("TOPLEFT", Oak.frame, "TOPRIGHT", -8, -72); panel:SetFrameStrata("DIALOG")
+    panel:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 }); panel:SetBackdropColor(0.04,0.04,0.04,0.98); panel:SetBackdropBorderColor(0.4,0.65,0.8,1)
+    local title = Text(panel, 12); title:SetPoint("TOP",0,-12); title:SetText("Class / Armor")
+    local y = -38
+    for _, class in ipairs({ "WARRIOR", "PALADIN", "DEATHKNIGHT", "HUNTER", "SHAMAN", "ROGUE", "DRUID", "MONK", "DEMONHUNTER", "PRIEST", "MAGE", "WARLOCK" }) do
+        local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate"); cb:SetPoint("TOPLEFT", 12, y); cb:SetSize(22,22); cb:SetChecked(Oak.filters.classes[class]); cb:SetScript("OnClick", function(self) Oak.filters.classes[class]=self:GetChecked() or nil; Oak.Refilter() end)
+        local text = Text(panel, 10); text:SetPoint("LEFT", cb, "RIGHT", 3, 0); text:SetText((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class]) or class); y=y-22
+    end
+    local armorTitle = Text(panel, 11); armorTitle:SetPoint("TOPLEFT", 14, y-4); armorTitle:SetText("Armor"); y=y-28
+    for _, armor in ipairs({ "Cloth", "Leather", "Mail", "Plate" }) do
+        local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate"); cb:SetPoint("TOPLEFT", 12, y); cb:SetSize(22,22); cb:SetChecked(Oak.filters.armor[armor]); cb:SetScript("OnClick", function(self) Oak.filters.armor[armor]=self:GetChecked() or nil; Oak.Refilter() end)
+        local text = Text(panel, 10); text:SetPoint("LEFT", cb, "RIGHT", 3, 0); text:SetText(armor); y=y-22
+    end
+    Button(panel, "Clear", 80, 68, -330, function() wipe(Oak.filters.classes); wipe(Oak.filters.armor); panel:Hide(); Oak.Refilter() end)
+    panel:Show()
 end
 
 local function Tooltip(row)
@@ -316,6 +323,7 @@ function Oak.BuildUI()
         frame.search:SetText("")
         Oak.Refilter()
     end)
+    Button(frame, "Class / Armor", 136, 508, -102, Oak.ShowClassArmor)
 
     frame.search = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
     frame.search:SetSize(237, 22)

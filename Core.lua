@@ -104,7 +104,7 @@ function Oak.EnsureUI()
         return false
     end
     Oak.results, Oak.visible = {}, {}
-    Oak.filters = { kind = "All", role = "ALL", text = "", friendly = false }
+    Oak.filters = { kind = "All", role = "ALL", text = "", friendly = false, classes = {}, armor = {} }
     Oak.sortKey, Oak.descending, Oak.offset = "name", false, 0
     Oak.groupCount, Oak.playerCount = 0, 0
     Oak.BuildUI()

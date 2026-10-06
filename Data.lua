@@ -85,7 +85,8 @@ function Oak.Whisper()
     local info = Oak.GetActionInfo(Oak.selected)
     if info then
         if Oak.db and Oak.db.customWhisper ~= "" then
-            ChatFrameUtil.SendTell(info.leaderName, Oak.db.customWhisper)
+            if ChatFrame_OpenChat then ChatFrame_OpenChat("/w " .. info.leaderName .. " " .. Oak.db.customWhisper)
+            else ChatFrameUtil.SendTell(info.leaderName, Oak.db.customWhisper) end
         else
             ChatFrameUtil.SendTell(info.leaderName)
         end

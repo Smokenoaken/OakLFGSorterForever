@@ -8,6 +8,7 @@
 ## SavedVariables: OakLFGSorterForeverDB
 ## IconTexture: Interface\AddOns\OakLFGSorterForever\Media\Logo.tga
 
+Supporters.lua
 Data.lua
 UI.lua
 Core.lua
