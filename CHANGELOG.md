@@ -15,3 +15,8 @@ Initial Forever release.
 - Fixed the Blizzard browser button on Forever builds that do not expose the legacy show helper.
 - Added a supporters panel and saved custom whisper message setting.
 - Double-clicking a group whispers its leader; double-clicking a player listing invites them when permitted.
+## 0.1.2
+
+- Added Forever class and armor filters with an Oak-styled flyout.
+- Added supporters and social-link access.
+- Fixed direct custom whispers and Blizzard browser fallback behavior.
