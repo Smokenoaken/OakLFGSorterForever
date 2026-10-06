@@ -179,7 +179,7 @@ function Oak.ShowClassArmor()
     panel:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 }); panel:SetBackdropColor(0.04,0.04,0.04,0.98); panel:SetBackdropBorderColor(0.4,0.65,0.8,1)
     local title = Text(panel, 12); title:SetPoint("TOP",0,-12); title:SetText("Class / Armor")
     local y = -38
-    for _, class in ipairs({ "WARRIOR", "PALADIN", "DEATHKNIGHT", "HUNTER", "SHAMAN", "ROGUE", "DRUID", "MONK", "DEMONHUNTER", "PRIEST", "MAGE", "WARLOCK" }) do
+    for _, class in ipairs({ "WARRIOR", "PALADIN", "HUNTER", "SHAMAN", "ROGUE", "DRUID", "PRIEST", "MAGE", "WARLOCK" }) do
         local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate"); cb:SetPoint("TOPLEFT", 12, y); cb:SetSize(22,22); cb:SetChecked(Oak.filters.classes[class]); cb:SetScript("OnClick", function(self) Oak.filters.classes[class]=self:GetChecked() or nil; Oak.Refilter() end)
         local text = Text(panel, 10); text:SetPoint("LEFT", cb, "RIGHT", 3, 0); text:SetText((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class]) or class); y=y-22
     end

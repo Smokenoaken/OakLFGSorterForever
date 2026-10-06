@@ -7,7 +7,7 @@ Oak.roleAtlases = {
     HEALER = "groupfinder-icon-role-micro-heal",
     DAMAGER = "groupfinder-icon-role-micro-dps",
 }
-Oak.classArmor = { WARRIOR="Plate", PALADIN="Plate", DEATHKNIGHT="Plate", HUNTER="Mail", SHAMAN="Mail", ROGUE="Leather", DRUID="Leather", MONK="Leather", DEMONHUNTER="Leather", PRIEST="Cloth", MAGE="Cloth", WARLOCK="Cloth" }
+Oak.classArmor = { WARRIOR="Plate", PALADIN="Plate", HUNTER="Mail", SHAMAN="Mail", ROGUE="Leather", DRUID="Leather", PRIEST="Cloth", MAGE="Cloth", WARLOCK="Cloth" }
 
 function Oak.ReadResult(id)
     local info = C_LFGList.GetSearchResultInfo(id)
