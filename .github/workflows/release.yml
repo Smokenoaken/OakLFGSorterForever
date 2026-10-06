@@ -1,0 +1,44 @@
+name: Validate and package
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua 5.1
+        run: sudo apt-get update && sudo apt-get install -y lua5.1
+      - name: Validate Lua and behavior
+        run: |
+          for file in *.lua tests/*.lua; do luac5.1 -p "$file"; done
+          lua5.1 tests/model.lua
+          lua5.1 tests/ui.lua
+          git diff --check
+      - name: Package addon
+        run: python3 tools/package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OakLFGSorterForever
+          path: dist/*.zip
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: OakLFGSorterForever
+          path: dist
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --verify-tag --title "$GITHUB_REF_NAME" --notes-file CHANGELOG.md

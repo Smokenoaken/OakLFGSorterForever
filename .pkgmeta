@@ -1,0 +1,9 @@
+package-as: OakLFGSorterForever
+manual-changelog: CHANGELOG.md
+ignore:
+  - .github
+  - tests
+  - tools
+  - dist
+  - README.md
+  - AGENTS.md

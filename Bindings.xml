@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="OAKLFGSORTERFOREVER_TOGGLE" header="OAKLFGSORTERFOREVER" category="Oak LFG Sorter - Forever">
+        SlashCmdList.OAKLFGFOREVER("")
+    </Binding>
+</Bindings>
