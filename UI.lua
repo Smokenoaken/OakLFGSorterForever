@@ -184,7 +184,7 @@ function Oak.ShowClassArmor()
         local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate"); cb:SetPoint("TOPLEFT", 12, y); cb:SetSize(22,22); cb:SetChecked(Oak.filters.classes[class]); cb:SetScript("OnClick", function(self) Oak.filters.classes[class]=self:GetChecked() or nil; Oak.Refilter() end)
         local text = Text(panel, 10); text:SetPoint("LEFT", cb, "RIGHT", 3, 0); text:SetText((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class]) or class); text:SetTextColor(0.95,0.95,0.95); y=y-22
     end
-    local divider = panel:CreateTexture(nil, "ARTWORK"); divider:SetColorTexture(0.62,0.42,0.16,0.6); divider:SetSize(190,1); divider:SetPoint("TOP",0,y+5)
+    local divider = panel:CreateTexture(nil, "ARTWORK"); divider:SetColorTexture(0.62,0.42,0.16,0.7); divider:SetSize(178,1); divider:SetPoint("TOP",0,y-1)
     local armorTitle = Text(panel, 11); armorTitle:SetPoint("TOPLEFT", 14, y-10); armorTitle:SetText("Armor"); armorTitle:SetTextColor(1,0.82,0.20); y=y-34
     for _, armor in ipairs({ "Cloth", "Leather", "Mail", "Plate" }) do
         local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate"); cb:SetPoint("TOPLEFT", 12, y); cb:SetSize(22,22); cb:SetChecked(Oak.filters.armor[armor]); cb:SetScript("OnClick", function(self) Oak.filters.armor[armor]=self:GetChecked() or nil; Oak.Refilter() end)
@@ -337,7 +337,7 @@ function Oak.BuildUI()
         frame.search:SetText("")
         Oak.Refilter()
     end)
-    Button(frame, "Class / Armor", 136, 508, -102, Oak.ShowClassArmor)
+    Button(frame, "Class / Armor Filters", 136, 508, -102, Oak.ShowClassArmor)
 
     frame.search = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
     frame.search:SetSize(237, 22)
