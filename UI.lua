@@ -165,6 +165,7 @@ function Oak.ShowSupporters()
     Button(panel, "Close", 100, 140, -350, function() panel:Hide() end); panel:Show()
 end
 
+StaticPopupDialogs = StaticPopupDialogs or {}
 StaticPopupDialogs["OAK_LFG_FOREVER_URL"] = {
     text = "Press Ctrl+C to copy the link",
     hasEditBox = 1, button1 = OKAY, timeout = 0, whileDead = 1, hideOnEscape = 1,
