@@ -58,6 +58,7 @@ CreateFrame=function(kind,name,parent,template)
 end
 UIParent=object()
 UISpecialFrames={}
+StaticPopupDialogs={}
 tinsert=table.insert
 wipe=function(t) for k in pairs(t) do t[k]=nil end end
 SlashCmdList={}
@@ -129,11 +130,17 @@ check(#Oak.visible==0 and Oak.frame.empty:IsShown(),"text filter redraw")
 LFGBrowseFrame.searching=true
 Oak.Render()
 check(not Oak.frame.category.enabled and not Oak.frame.refresh.enabled,"search disables repeated requests")
+Oak.searchTimedOut=true
+Oak.Render()
+check(Oak.frame.refresh.label.text == "Retry" and Oak.frame.status.text:find("timed out",1,true),
+    "stalled search offers visible recovery")
+Oak.searchTimedOut=nil
 LFGBrowseFrame.searching=false
 LFGBrowseFrame.searchFailed=true
 Oak.Render()
 check(Oak.frame.status.text:find("Search failed",1,true),"search failure state")
 SlashCmdList.OAKLFGFOREVER("")
-check(not Oak.frame:IsShown() and next(Oak.frame.events)==nil,"slash closes and releases events")
+check(not Oak.frame:IsShown() and Oak.frame.events.LFG_LIST_SEARCH_RESULTS_RECEIVED
+    and not Oak.frame.events.GROUP_ROSTER_UPDATE,"slash closes but retains search completion events")
 print(string.format("PASS: %d UI startup, menu, scrolling, and state checks (mock frames)",checks))
 

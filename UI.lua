@@ -165,7 +165,6 @@ function Oak.ShowSupporters()
     Button(panel, "Close", 100, 140, -350, function() panel:Hide() end); panel:Show()
 end
 
-StaticPopupDialogs = StaticPopupDialogs or {}
 StaticPopupDialogs["OAK_LFG_FOREVER_URL"] = {
     text = "Press Ctrl+C to copy the link",
     hasEditBox = 1, button1 = OKAY, timeout = 0, whileDead = 1, hideOnEscape = 1,
@@ -313,7 +312,7 @@ function Oak.BuildUI()
 
     frame.category = Button(frame, "Category", 150, 72, -43, Oak.ShowCategoryMenu)
     frame.activity = Button(frame, "All activities", 229, 228, -43, Oak.ShowActivityMenu)
-    frame.refresh = Button(frame, "Refresh", 83, 463, -43, function() LFGBrowse_DoSearch() end)
+    frame.refresh = Button(frame, "Refresh", 83, 463, -43, Oak.Search)
     Button(frame, "Options", 92, 552, -43, Oak.ShowOptions)
     frame.kindButtons = {}
     for index, kind in ipairs({ "All", "Group", "Player" }) do
@@ -430,7 +429,7 @@ end
 function Oak.Render()
     local frame = Oak.frame
     if not frame or not frame:IsShown() then return end
-    local searching = LFGBrowseFrame.searching
+    local searching = Oak.IsSearching()
     local category = LFGBrowseFrame.CategoryDropdown:GetValue()
     local info = category > 0 and C_LFGList.GetLfgCategoryInfo(category)
     frame.category.label:SetText(info and info.name or "Choose category")
@@ -440,7 +439,7 @@ function Oak.Render()
     frame.category:SetEnabled(not searching)
     frame.activity:SetEnabled(not searching and category > 0)
     frame.refresh:SetEnabled(not searching and category > 0)
-    frame.refresh.label:SetText(searching and "Searching..." or "Refresh")
+    frame.refresh.label:SetText(searching and "Searching..." or Oak.searchTimedOut and "Retry" or "Refresh")
     for key, button in pairs(frame.kindButtons) do Selected(button, Oak.filters.kind == key) end
     for key, button in pairs(frame.roleButtons) do Selected(button, Oak.filters.role == key) end
     for key, button in pairs(frame.headers) do Selected(button, Oak.sortKey == key) end
@@ -455,6 +454,7 @@ function Oak.Render()
     local status = string.format("%d shown / %d loaded | %d groups, %d players", #Oak.visible, #Oak.results, Oak.groupCount, Oak.playerCount)
     if Oak.filters.friendly then status = status .. " | New-player friendly" end
     if searching then status = "Searching... previous results shown"
+    elseif Oak.searchTimedOut then status = "Search timed out. Click Retry to search again."
     elseif LFGBrowseFrame.searchFailed then status = "Search failed. Previous results shown; click Refresh to retry." end
     frame.status:SetText(status)
     local selected = not searching and Oak.GetActionInfo(Oak.selected)

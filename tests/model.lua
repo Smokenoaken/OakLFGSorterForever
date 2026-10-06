@@ -122,6 +122,29 @@ GameTooltip = { Hide = function() end }
 Oak.OnShow()
 check(registered.LFG_LIST_SEARCH_RESULT_UPDATED and registered.PLAYER_REGEN_ENABLED, "events active while shown")
 Oak.OnHide()
-check(next(registered) == nil and focusCleared, "hidden window unregisters events and clears focus")
+check(registered.LFG_LIST_SEARCH_RESULTS_RECEIVED and registered.LFG_LIST_SEARCH_FAILED
+    and not registered.LFG_LIST_SEARCH_RESULT_UPDATED and focusCleared,
+    "hidden window retains completion events and clears focus")
+local timerCallback, searchCalls = nil, 0
+C_Timer = { NewTimer = function(_, callback)
+    timerCallback = callback
+    return { Cancel = function() timerCallback = nil end }
+end }
+LFGBrowseFrame = { searching = true, CategoryDropdown = { GetValue = function() return 2 end },
+    ActivityDropdown = { selectedValues = {7} } }
+C_LFGList.Search = function(category, _, _, _, _, _, activities)
+    check(category == 2 and activities[1] == 7, "retry preserves search selection")
+    searchCalls = searchCalls + 1
+end
+Oak.WatchSearch()
+timerCallback()
+check(Oak.searchTimedOut and not Oak.IsSearching(), "timeout enables manual recovery")
+check(LFGBrowseFrame.searching and searchCalls == 0, "timeout neither mutates Blizzard nor auto-searches")
+Oak.Search()
+Oak.Search()
+check(searchCalls == 1 and Oak.IsSearching(), "retry sends once and blocks duplicate requests")
+LFGBrowseFrame.searching = false
+Oak.OnEvent(nil, "LFG_LIST_SEARCH_FAILED")
+check(not Oak.IsSearching() and not Oak.searchTimedOut and not timerCallback, "failure clears retry and timer")
 print(string.format("PASS: %d Forever model, action, and lifecycle checks", checks))
 

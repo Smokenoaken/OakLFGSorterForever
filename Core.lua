@@ -8,6 +8,42 @@ local events = {
     "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
 }
 
+-- Keep recovery state in Oak, never force Blizzard's searching flag off.
+function Oak.IsSearching()
+    if Oak.searchTimedOut then return false end
+    return Oak.retryPending or (LFGBrowseFrame and LFGBrowseFrame.searching)
+end
+
+function Oak.WatchSearch()
+    if Oak.searchTimer or not Oak.IsSearching() then return end
+    Oak.searchTimer = C_Timer.NewTimer(20, function()
+        Oak.searchTimer = nil
+        if Oak.IsSearching() then
+            Oak.searchTimedOut = true
+            Oak.retryPending = nil
+            Oak.Render()
+        end
+    end)
+end
+
+function Oak.FinishSearch()
+    if Oak.searchTimer then Oak.searchTimer:Cancel(); Oak.searchTimer = nil end
+    Oak.searchTimedOut, Oak.retryPending = nil, nil
+end
+
+function Oak.Search()
+    if Oak.IsSearching() then return end
+    if not Oak.searchTimedOut then LFGBrowse_DoSearch(); return end
+    local category = LFGBrowseFrame.CategoryDropdown:GetValue()
+    if category <= 0 then return end
+    local activities = LFGBrowseFrame.ActivityDropdown.selectedValues
+    if #activities == 0 then activities = LFGUtil_GetFilteredActivities(category) end
+    Oak.searchTimedOut, Oak.retryPending = nil, true
+    Oak.WatchSearch()
+    C_LFGList.Search(category, 0, 0, nil, false, nil, activities)
+    Oak.Render()
+end
+
 function Oak.Refilter(resetScroll)
     wipe(Oak.visible)
     Oak.groupCount, Oak.playerCount = 0, 0
@@ -39,6 +75,9 @@ function Oak.RefreshResults()
 end
 
 function Oak.OnEvent(_, event, id)
+    if event == "LFG_LIST_SEARCH_RESULTS_RECEIVED" or event == "LFG_LIST_SEARCH_FAILED" then
+        Oak.FinishSearch()
+    end
     if event == "LFG_LIST_SEARCH_RESULTS_RECEIVED" then
         Oak.RefreshResults()
     elseif event == "LFG_LIST_SEARCH_RESULT_UPDATED" then
@@ -58,10 +97,14 @@ end
 function Oak.OnShow()
     for _, event in ipairs(events) do Oak.frame:RegisterEvent(event) end
     Oak.RefreshResults()
+    Oak.WatchSearch()
 end
 
 function Oak.OnHide()
+    -- Completion events must still clear a pending retry while Oak is hidden.
     Oak.frame:UnregisterAllEvents()
+    Oak.frame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")
+    Oak.frame:RegisterEvent("LFG_LIST_SEARCH_FAILED")
     Oak.frame.search:ClearFocus()
     GameTooltip:Hide()
     Oak.selected = nil
@@ -109,6 +152,7 @@ function Oak.EnsureUI()
     Oak.groupCount, Oak.playerCount = 0, 0
     Oak.BuildUI()
     hooksecurefunc("LFGBrowse_DoSearch", function()
+        Oak.WatchSearch()
         if Oak.frame:IsShown() then
             Oak.selected = nil
             Oak.Render()
