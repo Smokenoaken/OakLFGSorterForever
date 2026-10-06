@@ -109,6 +109,8 @@ function Oak.ShowOptions(owner)
             Oak.db.autoOpen = not Oak.db.autoOpen
             Oak.InstallAutoOpen()
         end)
+        menu:CreateButton("Custom whisper message", Oak.ShowWhisperSettings)
+        menu:CreateButton("Supporters", Oak.ShowSupporters)
         menu:CreateCheckbox("New-player-friendly listings only", function() return Oak.filters.friendly end, function()
             Oak.filters.friendly = not Oak.filters.friendly
             Oak.Refilter()
@@ -129,6 +131,33 @@ function Oak.ShowOptions(owner)
         end
         menu:CreateButton("Reset position", Oak.ResetPosition)
     end)
+end
+
+function Oak.ShowWhisperSettings()
+    if Oak.whisperSettings then Oak.whisperSettings:Show(); Oak.whisperSettings.edit:SetFocus(); return end
+    local panel = CreateFrame("Frame", "OakLFGSorterForeverWhisperSettings", UIParent, "BackdropTemplate")
+    Oak.whisperSettings = panel
+    panel:SetSize(420, 150); panel:SetPoint("CENTER"); panel:SetFrameStrata("TOOLTIP")
+    panel:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 }); panel:SetBackdropColor(0.04, 0.04, 0.04, 0.98); panel:SetBackdropBorderColor(0.4, 0.65, 0.8, 1)
+    local title = Text(panel, 13); title:SetPoint("TOP", 0, -14); title:SetText("Custom whisper message")
+    local help = Text(panel, 10); help:SetPoint("TOPLEFT", 16, -40); help:SetWidth(388); help:SetWordWrap(true); help:SetText("Used for group whispers and double-clicks. Leave blank to open a normal whisper.")
+    panel.edit = CreateFrame("EditBox", nil, panel, "InputBoxTemplate"); panel.edit:SetSize(388, 24); panel.edit:SetPoint("TOPLEFT", 16, -75); panel.edit:SetAutoFocus(false); panel.edit:SetMaxLetters(180); panel.edit:SetText(Oak.db.customWhisper or "")
+    panel.edit:SetScript("OnEscapePressed", function() panel:Hide() end)
+    Button(panel, "Save", 90, 112, -112, function() Oak.db.customWhisper = panel.edit:GetText(); panel:Hide() end)
+    Button(panel, "Cancel", 90, 218, -112, function() panel:Hide() end)
+    panel:Show(); panel.edit:SetFocus()
+end
+
+function Oak.ShowSupporters()
+    if Oak.supporters then Oak.supporters:Show(); return end
+    local panel = CreateFrame("Frame", "OakLFGSorterForeverSupporters", UIParent, "BackdropTemplate")
+    Oak.supporters = panel
+    panel:SetSize(380, 390); panel:SetPoint("CENTER"); panel:SetFrameStrata("TOOLTIP")
+    panel:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 }); panel:SetBackdropColor(0.04, 0.04, 0.04, 0.98); panel:SetBackdropBorderColor(0.4, 0.65, 0.8, 1)
+    local title = Text(panel, 14); title:SetPoint("TOP", 0, -14); title:SetText("Oak LFG Sorter supporters")
+    local body = Text(panel, 11); body:SetPoint("TOPLEFT", 18, -44); body:SetPoint("TOPRIGHT", -18, -44); body:SetJustifyH("LEFT"); body:SetWordWrap(true)
+    body:SetText("Thank you to everyone who supports Oak addons and helps test the Forever client.\\n\\nSupport Oak: Patreon.com/Oakensoul\\nDiscord: discord.gg/FRGUFaEEVd\\n\\nCurrent supporter names are maintained with the addon release.")
+    Button(panel, "Close", 100, 140, -350, function() panel:Hide() end); panel:Show()
 end
 
 local function Tooltip(row)
@@ -192,6 +221,13 @@ local function MakeRow(parent, index)
             Oak.selected = Oak.selected ~= self.result.id and self.result.id or nil
             Oak.Render()
         end
+    end)
+    row:SetScript("OnDoubleClick", function(self)
+        local result = self.result
+        if not result or LFGBrowseFrame.searching then return end
+        Oak.selected = result.id
+        if result.kind == "Group" then Oak.Whisper() else Oak.Invite() end
+        Oak.Render()
     end)
     row:SetScript("OnEnter", Tooltip)
     row:SetScript("OnLeave", function() GameTooltip:Hide() end)

@@ -79,7 +79,13 @@ end
 
 function Oak.Whisper()
     local info = Oak.GetActionInfo(Oak.selected)
-    if info then ChatFrameUtil.SendTell(info.leaderName) end
+    if info then
+        if Oak.db and Oak.db.customWhisper ~= "" then
+            ChatFrameUtil.SendTell(info.leaderName, Oak.db.customWhisper)
+        else
+            ChatFrameUtil.SendTell(info.leaderName)
+        end
+    end
 end
 
 function Oak.Invite()

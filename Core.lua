@@ -130,7 +130,14 @@ function Oak.OpenNative(tab)
     end
     Oak.openingNative = true
     Oak.frame:Hide()
-    LFGVanilla_ShowFrame(tab)
+    if LFGVanilla_ShowFrame then
+        LFGVanilla_ShowFrame(tab)
+    elseif tab == 1 and LFGListingFrame then
+        LFGListingFrame:Show()
+    elseif LFGBrowseFrame then
+        LFGBrowseFrame:Show()
+        if LFGBrowseFrame.Raise then LFGBrowseFrame:Raise() end
+    end
     Oak.openingNative = false
     print("|cffe03d02OAK|r: Use /sorter to return to Oak.")
 end
@@ -149,6 +156,7 @@ loader:SetScript("OnEvent", function(self, _, name)
         Oak.db = OakLFGSorterForeverDB
         Oak.db.scale = math.max(0.8, math.min(1.2, tonumber(Oak.db.scale) or 1))
         if Oak.db.autoOpen == nil then Oak.db.autoOpen = false end
+        if Oak.db.customWhisper == nil then Oak.db.customWhisper = "" end
         SLASH_OAKLFGFOREVER1 = "/sorter"
         SLASH_OAKLFGFOREVER2 = "/oaklfgforever"
         SlashCmdList.OAKLFGFOREVER = Slash

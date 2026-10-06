@@ -10,3 +10,8 @@ Initial Forever release.
 - Draggable Oak minimap button with saved position.
 - Open / Close Sorter keybinding in the Oak LFG Sorter - Forever category.
 - Saved window position, scale options, and optional auto-open.
+## 0.1.1
+
+- Fixed the Blizzard browser button on Forever builds that do not expose the legacy show helper.
+- Added a supporters panel and saved custom whisper message setting.
+- Double-clicking a group whispers its leader; double-clicking a player listing invites them when permitted.
