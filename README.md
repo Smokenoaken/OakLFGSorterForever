@@ -18,6 +18,11 @@ leader or invite a solo player using Forever's native group finder flow.
 [Download releases](https://github.com/Smokenoaken/OakLFGSorterForever/releases)
 | [Report an issue](https://github.com/Smokenoaken/OakLFGSorterForever/issues)
 
+Tagged GitHub releases publish through the marketplace workflow to CurseForge
+project 1729476 and Wago project rNkg0BNa. The repository needs `CF_API_TOKEN`
+and `WAGO_API_TOKEN` Actions secrets; the workflow warns separately if either
+one is missing.
+
 ## Use
 
 - `/sorter` or `/oaklfgforever`: open or close the window.
