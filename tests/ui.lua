@@ -36,6 +36,8 @@ function methods:SetText(value)
 end
 function methods:GetText() return self.text end
 function methods:SetTextColor(...) self.color={...} end
+function methods:SetChecked(value) self.checked=value end
+function methods:GetChecked() return self.checked end
 function methods:CreateFontString() return object() end
 function methods:CreateTexture() return object() end
 function methods:SetHighlightTexture() self.highlight=object() end
@@ -115,6 +117,26 @@ Oak.ShowOptions(Oak.frame)
 check(menuItems["Open with Blizzard's browser"]~=nil,"options menu constructed")
 Oak.ShowCategoryMenu(Oak.frame)
 check(menuItems.Dungeons~=nil,"native categories available")
+Oak.ShowClassArmor()
+local classPanel = Oak.classArmorPanel
+local druid = classPanel.classChecks.DRUID
+druid:SetChecked(true)
+druid.scripts.OnClick(druid)
+check(Oak.filters.classes.DRUID, "class checkbox updates filter")
+local leather = classPanel.armorChecks.Leather
+leather:SetChecked(true)
+leather.scripts.OnClick(leather)
+check(Oak.filters.armor.Leather, "armor checkbox updates filter")
+wipe(Oak.filters.classes)
+wipe(Oak.filters.armor)
+Oak.Refilter()
+check(not druid:GetChecked() and not leather:GetChecked(), "cleared filters reset visible checkmarks")
+classPanel:Hide()
+Oak.filters.classes.DRUID = true
+Oak.ShowClassArmor()
+check(classPanel == Oak.classArmorPanel and druid:GetChecked(), "reopening reused panel synchronizes filters")
+wipe(Oak.filters.classes)
+classPanel:Hide()
 Oak.results={}
 for index=1,20 do
     Oak.results[index]={id=index,name="Player"..index,kind="Player",class="DRUID",level=25,

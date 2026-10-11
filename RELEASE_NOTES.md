@@ -1,1 +1,5 @@
-General Bug Fixes
+- Refreshed the finder with warm Classic-style panels, rounded gold-trimmed buttons, and dropdown arrows.
+- Added class-colored names and class icons to the Class / Armor panel.
+- Added Tank, Healer, and DPS icons to the role selectors.
+- Centered Type, Level, Activity, and Age values under their column headers.
+- Fixed stale class and armor checkmarks after clearing filters and improved panel spacing.

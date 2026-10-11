@@ -1,6 +1,11 @@
 local _, Oak = ...
 local FONT = "Interface\\AddOns\\OakLFGSorterForever\\Media\\OakFont.ttf"
 local WHITE = "Interface\\Buttons\\WHITE8X8"
+local CLASSIC_BACKDROP = {
+    bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 12,
+    insets = { left = 3, right = 3, top = 3, bottom = 3 },
+}
 local ROWS, ROW_HEIGHT = 9, 30
 local columns = {
     { key = "kind", label = "Type", x = 0, width = 48 },
@@ -31,25 +36,52 @@ local function Button(parent, label, width, x, y, callback)
     local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
     button:SetSize(width, 23)
     button:SetPoint("TOPLEFT", x, y)
-    button:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 })
-    button:SetBackdropColor(0.20, 0.20, 0.20, 1)
-    button:SetBackdropBorderColor(0.34, 0.34, 0.34, 1)
+    button:SetBackdrop(CLASSIC_BACKDROP)
+    button:SetBackdropColor(0.10, 0.07, 0.035, 1)
+    button:SetBackdropBorderColor(0.60, 0.45, 0.22, 1)
     button.label = Text(button)
     button.label:SetPoint("LEFT", 5, 0)
     button.label:SetPoint("RIGHT", -5, 0)
     button.label:SetJustifyH("CENTER")
     button.label:SetText(label)
+    button.label:SetTextColor(1, 0.82, 0.20)
     button:SetHighlightTexture(WHITE)
-    button:GetHighlightTexture():SetVertexColor(1, 1, 1, 0.10)
+    button:GetHighlightTexture():SetVertexColor(1, 0.78, 0.30, 0.10)
+    button:GetHighlightTexture():ClearAllPoints()
+    button:GetHighlightTexture():SetPoint("TOPLEFT", 4, -4)
+    button:GetHighlightTexture():SetPoint("BOTTOMRIGHT", -4, 4)
     button:SetScript("OnClick", callback)
-    button:SetScript("OnEnable", function(self) self.label:SetTextColor(0.95, 0.95, 0.95) end)
-    button:SetScript("OnDisable", function(self) self.label:SetTextColor(0.45, 0.45, 0.45) end)
+    button:SetScript("OnEnable", function(self)
+        self.label:SetTextColor(1, 0.82, 0.20)
+        if self.arrow then self.arrow:SetAlpha(1) end
+    end)
+    button:SetScript("OnDisable", function(self)
+        self.label:SetTextColor(0.46, 0.42, 0.34)
+        if self.arrow then self.arrow:SetAlpha(0.35) end
+    end)
     return button
 end
 
+local function Dropdown(button)
+    button.label:SetPoint("LEFT", 10, 0)
+    button.label:SetPoint("RIGHT", -24, 0)
+    button.label:SetJustifyH("LEFT")
+    button.arrow = button:CreateTexture(nil, "ARTWORK")
+    button.arrow:SetSize(16, 16)
+    button.arrow:SetPoint("RIGHT", -6, 0)
+    button.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+    button.arrow:SetVertexColor(1, 0.82, 0.20)
+end
+
+local function PanelBackdrop(panel)
+    panel:SetBackdrop(CLASSIC_BACKDROP)
+    panel:SetBackdropColor(0.075, 0.045, 0.018, 0.98)
+    panel:SetBackdropBorderColor(0.65, 0.48, 0.22, 1)
+end
+
 local function Selected(button, active)
-    button:SetBackdropColor(active and 0.23 or 0.20, active and 0.32 or 0.20, active and 0.39 or 0.20, 1)
-    button:SetBackdropBorderColor(active and 0.40 or 0.34, active and 0.65 or 0.34, active and 0.80 or 0.34, 1)
+    button:SetBackdropColor(active and 0.27 or 0.10, active and 0.17 or 0.07, active and 0.055 or 0.035, 1)
+    button:SetBackdropBorderColor(active and 1 or 0.60, active and 0.78 or 0.45, active and 0.30 or 0.22, 1)
 end
 
 function Oak.ShowCategoryMenu(owner)
@@ -138,7 +170,7 @@ function Oak.ShowWhisperSettings()
     local panel = CreateFrame("Frame", "OakLFGSorterForeverWhisperSettings", UIParent, "BackdropTemplate")
     Oak.whisperSettings = panel
     panel:SetSize(420, 150); panel:SetPoint("CENTER"); panel:SetFrameStrata("TOOLTIP")
-    panel:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 }); panel:SetBackdropColor(0.04, 0.04, 0.04, 0.98); panel:SetBackdropBorderColor(0.4, 0.65, 0.8, 1)
+    PanelBackdrop(panel)
     local title = Text(panel, 13); title:SetPoint("TOP", 0, -14); title:SetText("Custom whisper message")
     local help = Text(panel, 10); help:SetPoint("TOPLEFT", 16, -40); help:SetWidth(388); help:SetWordWrap(true); help:SetText("Used for group whispers and double-clicks. Leave blank to open a normal whisper.")
     panel.edit = CreateFrame("EditBox", nil, panel, "InputBoxTemplate"); panel.edit:SetSize(388, 24); panel.edit:SetPoint("TOPLEFT", 16, -75); panel.edit:SetAutoFocus(false); panel.edit:SetMaxLetters(180); panel.edit:SetText(Oak.db.customWhisper or "")
@@ -153,7 +185,7 @@ function Oak.ShowSupporters()
     local panel = CreateFrame("Frame", "OakLFGSorterForeverSupporters", UIParent, "BackdropTemplate")
     Oak.supporters = panel
     panel:SetSize(380, 390); panel:SetPoint("CENTER"); panel:SetFrameStrata("TOOLTIP")
-    panel:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 1 }); panel:SetBackdropColor(0.04, 0.04, 0.04, 0.98); panel:SetBackdropBorderColor(0.4, 0.65, 0.8, 1)
+    PanelBackdrop(panel)
     local title = Text(panel, 14); title:SetPoint("TOP", 0, -14); title:SetText("Oak LFG Sorter supporters")
     local body = Text(panel, 11); body:SetPoint("TOPLEFT", 18, -44); body:SetPoint("TOPRIGHT", -18, -44); body:SetJustifyH("LEFT"); body:SetWordWrap(true)
     body:SetText("Thank you to everyone who supports Oak addons and helps test the Forever client.\n\nCurrent supporters:\n" .. table.concat(Oak.Patreons or {}, ", ") .. "\n\nSupport Oak with the links below.")
@@ -175,21 +207,38 @@ StaticPopupDialogs["OAK_LFG_FOREVER_URL"] = {
 function Oak.ShowClassArmor()
     if Oak.classArmorPanel then Oak.classArmorPanel:SetShown(not Oak.classArmorPanel:IsShown()); return end
     local panel = CreateFrame("Frame", nil, Oak.frame, "BackdropTemplate"); Oak.classArmorPanel = panel
-    panel:SetSize(220, 360); panel:SetPoint("TOPLEFT", Oak.frame, "TOPRIGHT", 6, -72); panel:SetFrameStrata("DIALOG")
-    panel:SetBackdrop({ bgFile = WHITE, edgeFile = WHITE, edgeSize = 2 }); panel:SetBackdropColor(0.055,0.055,0.055,0.98); panel:SetBackdropBorderColor(0.62,0.42,0.16,1)
+    panel:SetSize(220, 392); panel:SetPoint("TOPLEFT", Oak.frame, "TOPRIGHT", 6, -72); panel:SetFrameStrata("DIALOG")
+    panel:SetClampedToScreen(true)
+    panel:EnableMouse(true)
+    PanelBackdrop(panel)
+    panel.classChecks, panel.armorChecks = {}, {}
     local title = Text(panel, 12); title:SetPoint("TOP",0,-12); title:SetText("Class / Armor"); title:SetTextColor(1,0.82,0.20)
     local y = -38
     for _, class in ipairs({ "WARRIOR", "PALADIN", "HUNTER", "SHAMAN", "ROGUE", "DRUID", "PRIEST", "MAGE", "WARLOCK" }) do
         local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate"); cb:SetPoint("TOPLEFT", 12, y); cb:SetSize(22,22); cb:SetChecked(Oak.filters.classes[class]); cb:SetScript("OnClick", function(self) Oak.filters.classes[class]=self:GetChecked() or nil; Oak.Refilter() end)
-        local text = Text(panel, 10); text:SetPoint("LEFT", cb, "RIGHT", 3, 0); text:SetText((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class]) or class); text:SetTextColor(0.95,0.95,0.95); y=y-22
+        panel.classChecks[class] = cb
+        local icon = panel:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(18, 18)
+        icon:SetPoint("LEFT", cb, "RIGHT", 4, 0)
+        icon:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
+        local coords = CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
+        if coords then icon:SetTexCoord(unpack(coords)) else icon:Hide() end
+        local text = Text(panel, 11)
+        text:SetPoint("LEFT", icon, "RIGHT", 6, 0)
+        text:SetText((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class]) or class)
+        local color = RAID_CLASS_COLORS[class]
+        text:SetTextColor(color and color.r or 1, color and color.g or 1, color and color.b or 1)
+        y = y - 22
     end
     local divider = panel:CreateTexture(nil, "ARTWORK"); divider:SetColorTexture(0.62,0.42,0.16,0.7); divider:SetSize(178,1); divider:SetPoint("TOP",0,y-1)
     local armorTitle = Text(panel, 11); armorTitle:SetPoint("TOPLEFT", 14, y-10); armorTitle:SetText("Armor"); armorTitle:SetTextColor(1,0.82,0.20); y=y-34
     for _, armor in ipairs({ "Cloth", "Leather", "Mail", "Plate" }) do
         local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate"); cb:SetPoint("TOPLEFT", 12, y); cb:SetSize(22,22); cb:SetChecked(Oak.filters.armor[armor]); cb:SetScript("OnClick", function(self) Oak.filters.armor[armor]=self:GetChecked() or nil; Oak.Refilter() end)
+        panel.armorChecks[armor] = cb
         local text = Text(panel, 10); text:SetPoint("LEFT", cb, "RIGHT", 3, 0); text:SetText(armor); text:SetTextColor(0.95,0.95,0.95); y=y-22
     end
-    Button(panel, "Clear", 80, 68, -330, function() wipe(Oak.filters.classes); wipe(Oak.filters.armor); panel:Hide(); Oak.Refilter() end)
+    Button(panel, "Clear", 80, 70, -360, function() wipe(Oak.filters.classes); wipe(Oak.filters.armor); panel:Hide(); Oak.Refilter() end)
+    panel:SetScript("OnShow", function() Oak.Render() end)
     panel:Show()
 end
 
@@ -235,6 +284,9 @@ local function MakeRow(parent, index)
             local fs = Text(row)
             fs:SetPoint("LEFT", col.x + 3, 0)
             fs:SetWidth(col.width - 6)
+            if col.key == "kind" or col.key == "level" or col.key == "activity" or col.key == "age" then
+                fs:SetJustifyH("CENTER")
+            end
             row.fields[col.key] = fs
         end
     end
@@ -284,7 +336,7 @@ function Oak.BuildUI()
     if frame.PortraitContainer and frame.PortraitContainer.portrait then
         frame.PortraitContainer.portrait:SetTexture("Interface\\AddOns\\OakLFGSorterForever\\Media\\Logo.tga")
     end
-    if frame.Bg then frame.Bg:SetColorTexture(0.10, 0.10, 0.10, 0.97) end
+    if frame.Bg then frame.Bg:SetColorTexture(0.075, 0.045, 0.018, 0.98) end
     if frame.Inset then frame.Inset:Hide() end
     if frame.TopTileStreaks then frame.TopTileStreaks:Hide() end
     local drag = CreateFrame("Frame", nil, frame)
@@ -312,8 +364,10 @@ function Oak.BuildUI()
 
     frame.category = Button(frame, "Category", 150, 72, -43, Oak.ShowCategoryMenu)
     frame.activity = Button(frame, "All activities", 229, 228, -43, Oak.ShowActivityMenu)
+    Dropdown(frame.category)
+    Dropdown(frame.activity)
     frame.refresh = Button(frame, "Refresh", 83, 463, -43, Oak.Search)
-    Button(frame, "Options", 92, 552, -43, Oak.ShowOptions)
+    Dropdown(Button(frame, "Options", 92, 552, -43, Oak.ShowOptions))
     frame.kindButtons = {}
     for index, kind in ipairs({ "All", "Group", "Player" }) do
         local label = kind == "All" and "All" or kind .. "s"
@@ -329,6 +383,14 @@ function Oak.BuildUI()
             Oak.filters.role = role
             Oak.Refilter()
         end)
+        if Oak.roleAtlases[role] then
+            local button = frame.roleButtons[role]
+            local icon = button:CreateTexture(nil, "ARTWORK")
+            icon:SetSize(14, 14)
+            icon:SetPoint("LEFT", 6, 0)
+            icon:SetAtlas(Oak.roleAtlases[role])
+            button.label:SetPoint("LEFT", 22, 0)
+        end
     end
     Button(frame, "Clear filters", 136, 508, -76, function()
         Oak.filters.kind, Oak.filters.role, Oak.filters.friendly = "All", "ALL", false
@@ -371,6 +433,7 @@ function Oak.BuildUI()
     frame.empty:SetWidth(600)
     frame.empty:SetJustifyH("CENTER")
     frame.empty:SetWordWrap(true)
+    frame.empty:SetTextColor(0.80, 0.72, 0.55)
     frame:EnableMouseWheel(true)
     frame:SetScript("OnMouseWheel", function(_, delta)
         frame.scroll:SetValue(math.max(0, math.min(math.max(0, #Oak.visible - ROWS), Oak.offset - delta * 3)))
@@ -388,6 +451,7 @@ function Oak.BuildUI()
     frame.status = Text(frame, 10)
     frame.status:SetPoint("TOPLEFT", 16, -422)
     frame.status:SetWidth(622)
+    frame.status:SetTextColor(0.80, 0.72, 0.55)
     frame.list = Button(frame, "List / Edit", 94, 14, -445, function() Oak.OpenNative(1) end)
     Button(frame, "Blizzard", 80, 114, -445, function() Oak.OpenNative(2) end)
     frame.selection = Text(frame, 10)
@@ -405,15 +469,15 @@ function Oak.RenderRows()
         row:SetShown(result ~= nil)
         if result then
             local selected = Oak.selected == result.id
-            local shade = index % 2 == 0 and 0.10 or 0.15
-            row.bg:SetColorTexture(selected and 0.20 or shade, selected and 0.29 or shade, selected and 0.36 or shade, 0.98)
+            local shade = index % 2 == 0 and 0.09 or 0.13
+            row.bg:SetColorTexture(selected and 0.28 or shade, selected and 0.18 or shade * 0.70, selected and 0.055 or shade * 0.38, 0.98)
             row.fields.kind:SetText(result.hasSelf and "You" or result.kind)
             row.fields.name:SetText(result.name)
             local color = result.class and RAID_CLASS_COLORS[result.class]
             row.fields.name:SetTextColor(color and color.r or 1, color and color.g or 0.82, color and color.b or 0)
             row.fields.level:SetText(result.level > 0 and result.level or "-")
             row.fields.activity:SetText(result.hasSelf and "Your listing" or result.activity)
-            row.fields.activity:SetTextColor(0.40, 0.75, 1)
+            row.fields.activity:SetTextColor(0.88, 0.77, 0.53)
             row.fields.age:SetText(result.age < 60 and "<1m" or math.floor(result.age / 60) .. "m")
             row.fields.note:SetText(result.note ~= "" and result.note or result.style)
             row.fields.note:SetTextColor(0.80, 0.80, 0.80)
@@ -443,6 +507,10 @@ function Oak.Render()
     for key, button in pairs(frame.kindButtons) do Selected(button, Oak.filters.kind == key) end
     for key, button in pairs(frame.roleButtons) do Selected(button, Oak.filters.role == key) end
     for key, button in pairs(frame.headers) do Selected(button, Oak.sortKey == key) end
+    if Oak.classArmorPanel then
+        for class, cb in pairs(Oak.classArmorPanel.classChecks) do cb:SetChecked(Oak.filters.classes[class] or false) end
+        for armor, cb in pairs(Oak.classArmorPanel.armorChecks) do cb:SetChecked(Oak.filters.armor[armor] or false) end
+    end
     frame.scroll:SetMinMaxValues(0, math.max(0, #Oak.visible - ROWS))
     Oak.offset = math.min(Oak.offset, math.max(0, #Oak.visible - ROWS))
     frame.scroll:SetValue(Oak.offset)
