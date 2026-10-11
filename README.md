@@ -55,6 +55,20 @@ Enable **OAK LFG Sorter - Forever** in the AddOns list. Reload the UI; if the ne
 addon is not listed, restart the client. This has its own SavedVariables and
 does not depend on the Retail OakLFGSorter addon or EllesmereUI.
 
+## Release delivery
+
+Push a version tag and let the Validate and package workflow publish the GitHub
+release and ZIP. Marketplace delivery uses the repository's configured webhooks:
+
+- CurseForge receives push events and packages new tags from this repository.
+- Wago receives release events; release automation targets Classic Forever.
+- Keep webhook URLs and signing secrets in GitHub's webhook settings, never in source.
+- Check webhook delivery separately from marketplace publication. CurseForge files
+  can remain Under Review after a successful build and notification.
+
+The Manual marketplace upload workflow is an optional recovery path. It requires
+both API tokens and an existing release tag; it does not run automatically.
+
 ## Validation
 
 - Lua 5.1 syntax checked for the addon files.
