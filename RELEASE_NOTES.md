@@ -1,5 +1,5 @@
-- Refreshed the finder with warm Classic-style panels, rounded gold-trimmed buttons, and dropdown arrows.
-- Added class-colored names and class icons to the Class / Armor panel.
-- Added Tank, Healer, and DPS icons to the role selectors.
-- Centered Type, Level, Activity, and Age values under their column headers.
-- Fixed stale class and armor checkmarks after clearing filters and improved panel spacing.
+- Added a sortable Zone column showing the player or group leader's reported location.
+- Added My zone and specific-zone filters, zone text search, and member locations in tooltips.
+- Centered Roles / Size and Zone data while keeping names and notes left aligned.
+- Expanded Note / Style by slightly narrowing Name / Leader and Zone without changing the window size or Age width.
+- Automatically hide Activity when one activity is selected, giving its space to Note / Style.

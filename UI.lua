@@ -9,12 +9,13 @@ local CLASSIC_BACKDROP = {
 local ROWS, ROW_HEIGHT = 9, 30
 local columns = {
     { key = "kind", label = "Type", x = 0, width = 48 },
-    { key = "name", label = "Name / Leader", x = 48, width = 134 },
-    { key = "level", label = "Lvl", x = 182, width = 34 },
-    { key = "activity", label = "Activity", x = 216, width = 116 },
-    { key = "size", label = "Roles / Size", x = 332, width = 85 },
-    { key = "age", label = "Age", x = 417, width = 36 },
-    { key = "note", label = "Note / Style", x = 453, width = 169 },
+    { key = "name", label = "Name / Leader", x = 48, width = 118 },
+    { key = "level", label = "Lvl", x = 166, width = 34 },
+    { key = "activity", label = "Activity", x = 200, width = 116 },
+    { key = "size", label = "Roles / Size", x = 316, width = 85 },
+    { key = "age", label = "Age", x = 401, width = 36 },
+    { key = "zone", label = "Zone", x = 437, width = 88 },
+    { key = "note", label = "Note / Style", x = 525, width = 97 },
 }
 
 local function Text(parent, size)
@@ -134,6 +135,36 @@ function Oak.ShowActivityMenu(owner)
     end)
 end
 
+function Oak.ShowZoneMenu(owner)
+    MenuUtil.CreateContextMenu(owner, function(_, menu)
+        menu:CreateTitle("Player / group leader zone")
+        menu:CreateRadio("All zones", function() return not Oak.filters.zone and not Oak.filters.myZone end, function()
+            Oak.filters.zone, Oak.filters.myZone = nil, nil
+            Oak.Refilter()
+        end)
+        menu:CreateRadio("My zone", function() return Oak.filters.myZone end, function()
+            Oak.filters.zone, Oak.filters.myZone = nil, true
+            Oak.Refilter()
+        end)
+        local zones, seen = {}, {}
+        for _, result in ipairs(Oak.results) do
+            if result.zone and result.zone ~= "" and not seen[result.zone] then
+                seen[result.zone] = true
+                zones[#zones + 1] = result.zone
+            end
+        end
+        if Oak.filters.zone and not seen[Oak.filters.zone] then zones[#zones + 1] = Oak.filters.zone end
+        table.sort(zones)
+        menu:SetScrollMode(360)
+        for _, zone in ipairs(zones) do
+            menu:CreateRadio(zone, function() return Oak.filters.zone == zone end, function()
+                Oak.filters.zone, Oak.filters.myZone = zone, nil
+                Oak.Refilter()
+            end)
+        end
+    end)
+end
+
 function Oak.ShowOptions(owner)
     MenuUtil.CreateContextMenu(owner, function(_, menu)
         menu:CreateTitle("Oak LFG Sorter - Forever")
@@ -249,6 +280,7 @@ local function Tooltip(row)
     GameTooltip:SetText(result.name)
     GameTooltip:AddLine(result.hasSelf and "Your listing" or result.kind, 0.5, 0.8, 1)
     GameTooltip:AddLine(result.activity, 0.8, 0.8, 0.8, true)
+    GameTooltip:AddLine((result.kind == "Group" and "Leader zone: " or "Zone: ") .. (result.zone ~= "" and result.zone or "Unknown"), 0.88, 0.77, 0.53)
     if result.style ~= "" then GameTooltip:AddLine(result.style, 0.4, 1, 0.4) end
     if result.friendly then GameTooltip:AddLine("New-player friendly", 0.4, 1, 0.4) end
     if result.note ~= "" then GameTooltip:AddLine(result.note, 1, 1, 1, true) end
@@ -266,6 +298,7 @@ local function Tooltip(row)
             GameTooltip:AddDoubleLine(member.name or className,
                 string.format("%s %s  %s", member.level or "?", className, table.concat(roleNames, "/")),
                 color and color.r or 1, color and color.g or 1, color and color.b or 1, 0.7, 0.7, 0.7)
+            if member.areaName and member.areaName ~= "" then GameTooltip:AddLine("  " .. member.areaName, 0.7, 0.7, 0.7) end
         end
     end
     GameTooltip:Show()
@@ -284,7 +317,7 @@ local function MakeRow(parent, index)
             local fs = Text(row)
             fs:SetPoint("LEFT", col.x + 3, 0)
             fs:SetWidth(col.width - 6)
-            if col.key == "kind" or col.key == "level" or col.key == "activity" or col.key == "age" then
+            if col.key ~= "name" and col.key ~= "note" then
                 fs:SetJustifyH("CENTER")
             end
             row.fields[col.key] = fs
@@ -294,11 +327,12 @@ local function MakeRow(parent, index)
     for roleIndex, role in ipairs(Oak.roles) do
         local icon = row:CreateTexture(nil, "ARTWORK")
         icon:SetSize(14, 14)
-        icon:SetPoint("LEFT", 334 + (roleIndex - 1) * 25, 3)
+        icon:SetPoint("CENTER", row, "LEFT", columns[5].x + columns[5].width / 2 + (roleIndex - 2) * 25, 3)
         icon:SetAtlas(Oak.roleAtlases[role])
         row.roleIcons[role] = icon
         local count = Text(row, 9)
         count:SetPoint("TOP", icon, "BOTTOM", 0, 1)
+        count:SetJustifyH("CENTER")
         row.roleCounts[role] = count
     end
     row:SetScript("OnClick", function(self)
@@ -394,6 +428,7 @@ function Oak.BuildUI()
     end
     Button(frame, "Clear filters", 136, 508, -76, function()
         Oak.filters.kind, Oak.filters.role, Oak.filters.friendly = "All", "ALL", false
+        Oak.filters.zone, Oak.filters.myZone = nil, nil
         wipe(Oak.filters.classes); wipe(Oak.filters.armor)
         frame.search:SetText("")
         Oak.Refilter()
@@ -412,9 +447,14 @@ function Oak.BuildUI()
         Oak.filters.text = self:GetText()
         Oak.Refilter()
     end)
-    frame.searchHint = Text(frame, 10)
-    frame.searchHint:SetPoint("LEFT", frame.search, "RIGHT", 10, 0)
-    frame.searchHint:SetText("Filter name, activity, or note")
+    frame.zone = Button(frame, "All zones", 230, 270, -102, Oak.ShowZoneMenu)
+    Dropdown(frame.zone)
+    frame.search:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Filter name, activity, note, or zone")
+        GameTooltip:Show()
+    end)
+    frame.search:SetScript("OnLeave", function() GameTooltip:Hide() end)
     frame.headers = {}
     for _, col in ipairs(columns) do
         local header = Button(frame, col.label, col.width, 14 + col.x, -129, function()
@@ -461,6 +501,37 @@ function Oak.BuildUI()
     frame.invite = Button(frame, "Invite", 106, 534, -445, Oak.Invite)
 end
 
+local function LayoutColumns(frame, hideActivity)
+    if frame.activityColumnHidden == hideActivity then return end
+    frame.activityColumnHidden = hideActivity
+    local x = 0
+    for _, col in ipairs(columns) do
+        local shown = col.key ~= "activity" or not hideActivity
+        local width = col.width + (col.key == "note" and hideActivity and columns[4].width or 0)
+        local header = frame.headers[col.key]
+        header:SetShown(shown)
+        header:ClearAllPoints()
+        header:SetPoint("TOPLEFT", 14 + x, -129)
+        header:SetWidth(width)
+        for _, row in ipairs(frame.rows) do
+            local field = row.fields[col.key]
+            if field then
+                field:SetShown(shown)
+                field:ClearAllPoints()
+                field:SetPoint("LEFT", x + 3, 0)
+                field:SetWidth(width - 6)
+            else
+                for index, role in ipairs(Oak.roles) do
+                    local icon = row.roleIcons[role]
+                    icon:ClearAllPoints()
+                    icon:SetPoint("CENTER", row, "LEFT", x + width / 2 + (index - 2) * 25, 3)
+                end
+            end
+        end
+        if shown then x = x + width end
+    end
+end
+
 function Oak.RenderRows()
     local frame = Oak.frame
     for index, row in ipairs(frame.rows) do
@@ -481,6 +552,8 @@ function Oak.RenderRows()
             row.fields.age:SetText(result.age < 60 and "<1m" or math.floor(result.age / 60) .. "m")
             row.fields.note:SetText(result.note ~= "" and result.note or result.style)
             row.fields.note:SetTextColor(0.80, 0.80, 0.80)
+            row.fields.zone:SetText(result.zone and result.zone ~= "" and result.zone or "Unknown")
+            row.fields.zone:SetTextColor(0.88, 0.77, 0.53)
             for _, role in ipairs(Oak.roles) do
                 local count = result.roles[role]
                 row.roleIcons[role]:SetAlpha(count > 0 and 1 or 0.18)
@@ -498,12 +571,14 @@ function Oak.Render()
     local info = category > 0 and C_LFGList.GetLfgCategoryInfo(category)
     frame.category.label:SetText(info and info.name or "Choose category")
     local activities = LFGBrowseFrame.ActivityDropdown.selectedValues
+    LayoutColumns(frame, #activities == 1)
     local activity = #activities == 1 and C_LFGList.GetActivityInfoTable(activities[1])
     frame.activity.label:SetText(activity and LFGUtil_GetActivityInfoName(activity) or #activities > 1 and #activities .. " activities" or "All activities")
     frame.category:SetEnabled(not searching)
     frame.activity:SetEnabled(not searching and category > 0)
     frame.refresh:SetEnabled(not searching and category > 0)
     frame.refresh.label:SetText(searching and "Searching..." or Oak.searchTimedOut and "Retry" or "Refresh")
+    frame.zone.label:SetText(Oak.filters.myZone and "My zone" or Oak.filters.zone or "All zones")
     for key, button in pairs(frame.kindButtons) do Selected(button, Oak.filters.kind == key) end
     for key, button in pairs(frame.roleButtons) do Selected(button, Oak.filters.role == key) end
     for key, button in pairs(frame.headers) do Selected(button, Oak.sortKey == key) end

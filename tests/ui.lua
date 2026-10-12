@@ -36,6 +36,7 @@ function methods:SetText(value)
 end
 function methods:GetText() return self.text end
 function methods:SetTextColor(...) self.color={...} end
+function methods:SetJustifyH(value) self.justifyH=value end
 function methods:SetChecked(value) self.checked=value end
 function methods:GetChecked() return self.checked end
 function methods:CreateFontString() return object() end
@@ -110,6 +111,20 @@ SlashCmdList.OAKLFGFOREVER("")
 check(Oak.frame and Oak.frame:IsShown(),"slash builds and opens UI")
 check(#Oak.frame.rows==9,"fixed nine-row pool")
 check(Oak.frame.width==660 and Oak.frame.height==484,"compact frame dimensions")
+LFGBrowseFrame.ActivityDropdown.selectedValues = {7}
+Oak.Render()
+check(not Oak.frame.headers.activity:IsShown() and not Oak.frame.rows[1].fields.activity:IsShown(), "single activity hides header and row field")
+check(Oak.frame.headers.note.width == 213 and Oak.frame.headers.age.width == 36, "single activity expands notes without resizing age")
+check(Oak.frame.rows[1].fields.zone.justifyH == "CENTER" and Oak.frame.rows[1].fields.name.justifyH == "LEFT"
+    and Oak.frame.rows[1].fields.note.justifyH == "LEFT", "zone centered and free text left aligned")
+LFGBrowseFrame.ActivityDropdown.selectedValues = {7, 8}
+Oak.Render()
+check(Oak.frame.headers.activity:IsShown() and Oak.frame.rows[1].fields.activity:IsShown()
+    and Oak.frame.headers.note.width == 97, "multiple activities restore column and note width")
+check(Oak.frame.headers.note.point[2] + Oak.frame.headers.note.width == 636, "columns retain original right edge")
+LFGBrowseFrame.ActivityDropdown.selectedValues = {}
+Oak.Render()
+check(Oak.frame.headers.activity:IsShown(), "all activities retains activity column")
 check(not Oak.frame.whisper.enabled and not Oak.frame.invite.enabled,"empty selection disables actions")
 check(Oak.frame.empty.text:find("Choose a category",1,true),"initial empty state")
 check(Oak.frame.events.LFG_LIST_SEARCH_RESULTS_RECEIVED,"visible events registered")
@@ -117,6 +132,12 @@ Oak.ShowOptions(Oak.frame)
 check(menuItems["Open with Blizzard's browser"]~=nil,"options menu constructed")
 Oak.ShowCategoryMenu(Oak.frame)
 check(menuItems.Dungeons~=nil,"native categories available")
+Oak.ShowZoneMenu(Oak.frame.zone)
+check(menuItems["All zones"] and menuItems["My zone"], "zone menu constructed")
+menuItems["My zone"]()
+check(Oak.filters.myZone and Oak.frame.zone.label.text == "My zone", "my zone selection updates control")
+menuItems["All zones"]()
+check(not Oak.filters.myZone and not Oak.filters.zone, "all zones clears location filter")
 Oak.ShowClassArmor()
 local classPanel = Oak.classArmorPanel
 local druid = classPanel.classChecks.DRUID
@@ -140,10 +161,13 @@ classPanel:Hide()
 Oak.results={}
 for index=1,20 do
     Oak.results[index]={id=index,name="Player"..index,kind="Player",class="DRUID",level=25,
-        activity="Blackfathom Deeps",note="",style="Relaxed",age=30,roles={TANK=1,HEALER=0,DAMAGER=1},hasSelf=false,searchText="player"}
+        activity="Blackfathom Deeps",zone="Ashenvale",note="",style="Relaxed",age=30,roles={TANK=1,HEALER=0,DAMAGER=1},hasSelf=false,searchText="player"}
 end
 Oak.Refilter()
 check(Oak.frame.rows[1].fields.name.text=="Player1","row binding")
+check(Oak.frame.rows[1].fields.zone.text == "Ashenvale", "zone column binding")
+Oak.ShowZoneMenu(Oak.frame.zone)
+check(menuItems.Ashenvale ~= nil, "zone menu includes loaded locations")
 check(Oak.frame.scroll:IsShown() and Oak.frame.scroll.max==11,"scroll range")
 Oak.frame.scripts.OnMouseWheel(Oak.frame,-1)
 check(Oak.offset==3,"mouse wheel advances pooled list")

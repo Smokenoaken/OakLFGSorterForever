@@ -46,13 +46,28 @@ check(Oak.db.autoOpen == false and next(loader.events) == nil, "default off unre
 check(Oak.frame == nil, "no UI built at login")
 check(SlashCmdList.OAKLFGFOREVER ~= nil, "slash command available")
 info[1] = { leaderName = "Solo", numMembers = 1, activityIDs = {7}, comment = "A 100% relaxed run", generalPlaystyle = 1, age = 35, hasSelf = false }
-players[1] = { classFilename = "DRUID", level = 25, lfgRoles = { tank = true, healer = true } }
+players[1] = { classFilename = "DRUID", level = 25, areaName = "Ashenvale", lfgRoles = { tank = true, healer = true } }
 info[2] = { leaderName = "Group", numMembers = 3, activityIDs = {7}, comment = "", hasSelf = false }
-leaders[2] = { classFilename = "WARRIOR", level = 30 }
+leaders[2] = { classFilename = "WARRIOR", level = 30, areaName = "Orgrimmar" }
 counts[2] = { TANK = 1, HEALER = 0, DAMAGER = 2 }
 info[3] = { leaderName = "Me", numMembers = 1, activityIDs = {7}, hasSelf = true }
 info[4] = { leaderName = "Gone", numMembers = 1, isDelisted = true }
 local solo, group, self = Oak.ReadResult(1), Oak.ReadResult(2), Oak.ReadResult(3)
+GetRealZoneText = function() return "Ashenvale" end
+local zoneFilters = { kind = "All", role = "ALL", text = "", myZone = true }
+check(solo.zone == "Ashenvale" and group.zone == "Orgrimmar" and self.zone == "", "zones use player or leader with unknown fallback")
+check(Oak.Matches(solo, zoneFilters) and not Oak.Matches(group, zoneFilters), "my zone filters by reported location")
+local unknownZone = Oak.ReadResult(1)
+unknownZone.zone = ""
+check(not Oak.Matches(unknownZone, zoneFilters), "unknown location excluded from zone filter")
+zoneFilters.myZone, zoneFilters.zone = nil, "Orgrimmar"
+check(Oak.Matches(group, zoneFilters) and not Oak.Matches(solo, zoneFilters), "specific zone filter")
+check(Oak.Matches(self, zoneFilters), "own listing retained with zone filter")
+zoneFilters.zone, zoneFilters.text = nil, "ashenvale"
+check(Oak.Matches(solo, zoneFilters), "zone included in text search")
+local zoneResults = {group, solo}
+Oak.Sort(zoneResults, "zone", false)
+check(zoneResults[1] == solo, "zone sort")
 check(solo.kind == "Player" and solo.level == 25, "solo listing data")
 check(solo.roles.TANK == 1 and solo.roles.HEALER == 1 and solo.roles.DAMAGER == 0, "multi-role solo preserved")
 check(group.kind == "Group" and group.roles.DAMAGER == 2 and group.level == 0, "group composition")

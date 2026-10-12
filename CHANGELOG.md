@@ -1,3 +1,11 @@
+## 0.1.5
+
+- Added a sortable Zone column showing the player or group leader's reported location.
+- Added My zone and specific-zone filters, zone text search, and member locations in tooltips.
+- Centered Roles / Size and Zone data while keeping names and notes left aligned.
+- Expanded Note / Style by slightly narrowing Name / Leader and Zone without changing the window size or Age width.
+- Automatically hide Activity when one activity is selected, giving its space to Note / Style.
+
 ## 0.1.4
 
 - Refreshed the finder with warm Classic-style panels, rounded gold-trimmed buttons, and dropdown arrows.

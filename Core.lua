@@ -6,6 +6,7 @@ local events = {
     "LFG_LIST_SEARCH_FAILED", "LFG_LIST_ACTIVE_ENTRY_UPDATE",
     "LFG_LIST_AVAILABILITY_UPDATE", "GROUP_ROSTER_UPDATE",
     "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
+    "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS",
 }
 
 -- Keep recovery state in Oak, never force Blizzard's searching flag off.
@@ -75,6 +76,10 @@ function Oak.RefreshResults()
 end
 
 function Oak.OnEvent(_, event, id)
+    if event == "ZONE_CHANGED_NEW_AREA" or event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
+        if Oak.filters.myZone then Oak.Refilter() end
+        return
+    end
     if event == "LFG_LIST_SEARCH_RESULTS_RECEIVED" or event == "LFG_LIST_SEARCH_FAILED" then
         Oak.FinishSearch()
     end

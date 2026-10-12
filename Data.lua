@@ -35,12 +35,13 @@ function Oak.ReadResult(id)
         class = player and player.classFilename,
         armor = player and Oak.classArmor[player.classFilename],
         level = solo and player and player.level or 0,
+        zone = player and player.areaName or "",
         size = info.numMembers, kind = solo and "Player" or "Group",
         activity = table.concat(activities, ", "), note = info.comment or "",
         style = style or "", age = info.age or 0, roles = roles,
         hasSelf = info.hasSelf, friendly = info.newPlayerFriendly,
     }
-    result.searchText = string.lower(table.concat({ result.name, result.activity, result.note, result.style }, " "))
+    result.searchText = string.lower(table.concat({ result.name, result.activity, result.note, result.style, result.zone }, " "))
     return result
 end
 
@@ -51,6 +52,8 @@ function Oak.Matches(result, filters)
         if filters.classes and next(filters.classes) and not filters.classes[result.class] then return false end
         if filters.armor and next(filters.armor) and not filters.armor[result.armor] then return false end
         if filters.friendly and not result.friendly then return false end
+        if filters.zone and (not result.zone or result.zone == "" or result.zone ~= filters.zone) then return false end
+        if filters.myZone and (not result.zone or result.zone == "" or result.zone ~= GetRealZoneText()) then return false end
         if filters.text ~= "" and not result.searchText:find(string.lower(filters.text), 1, true) then return false end
     end
     return true
