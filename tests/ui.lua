@@ -175,12 +175,15 @@ Oak.frame.search:SetText("nonmatching")
 check(#Oak.visible==0 and Oak.frame.empty:IsShown(),"text filter redraw")
 LFGBrowseFrame.searching=true
 Oak.Render()
-check(not Oak.frame.category.enabled and not Oak.frame.refresh.enabled,"search disables repeated requests")
-Oak.searchTimedOut=true
+LFGBrowseFrame.CategoryDropdown.GetValue = function() return 2 end
 Oak.Render()
-check(Oak.frame.refresh.label.text == "Retry" and Oak.frame.status.text:find("timed out",1,true),
-    "stalled search offers visible recovery")
-Oak.searchTimedOut=nil
+check(not Oak.frame.category.enabled and Oak.frame.refresh.enabled and Oak.frame.refresh.label.text == "Retry", "search offers immediate retry while locking category")
+Oak.retryCooldown = true
+Oak.Render()
+check(not Oak.frame.refresh.enabled, "retry button disabled during cooldown")
+Oak.retryCooldown = nil
+Oak.Render()
+check(Oak.frame.refresh.enabled, "retry button reenabled after cooldown")
 LFGBrowseFrame.searching=false
 LFGBrowseFrame.searchFailed=true
 Oak.Render()

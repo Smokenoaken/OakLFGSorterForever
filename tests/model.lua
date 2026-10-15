@@ -141,7 +141,8 @@ check(registered.LFG_LIST_SEARCH_RESULTS_RECEIVED and registered.LFG_LIST_SEARCH
     and not registered.LFG_LIST_SEARCH_RESULT_UPDATED and focusCleared,
     "hidden window retains completion events and clears focus")
 local timerCallback, searchCalls = nil, 0
-C_Timer = { NewTimer = function(_, callback)
+C_Timer = { NewTimer = function(delay, callback)
+    check(delay == 2, "retry cooldown is two seconds")
     timerCallback = callback
     return { Cancel = function() timerCallback = nil end }
 end }
@@ -151,15 +152,17 @@ C_LFGList.Search = function(category, _, _, _, _, _, activities)
     check(category == 2 and activities[1] == 7, "retry preserves search selection")
     searchCalls = searchCalls + 1
 end
-Oak.WatchSearch()
+check(Oak.IsSearching() and not Oak.retryCooldown, "first retry available immediately")
+Oak.Search()
+Oak.Search()
+check(searchCalls == 1 and Oak.IsSearching() and LFGBrowseFrame.searching, "retry blocks duplicate clicks without mutating Blizzard")
 timerCallback()
-check(Oak.searchTimedOut and not Oak.IsSearching(), "timeout enables manual recovery")
-check(LFGBrowseFrame.searching and searchCalls == 0, "timeout neither mutates Blizzard nor auto-searches")
 Oak.Search()
-Oak.Search()
-check(searchCalls == 1 and Oak.IsSearching(), "retry sends once and blocks duplicate requests")
+check(searchCalls == 2, "retry available again after cooldown")
 LFGBrowseFrame.searching = false
 Oak.OnEvent(nil, "LFG_LIST_SEARCH_FAILED")
-check(not Oak.IsSearching() and not Oak.searchTimedOut and not timerCallback, "failure clears retry and timer")
+check(not Oak.IsSearching() and Oak.retryCooldown, "failure clears pending search but preserves click cooldown")
+timerCallback()
+check(not Oak.retryCooldown, "cooldown expires after completion")
 print(string.format("PASS: %d Forever model, action, and lifecycle checks", checks))
 

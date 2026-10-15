@@ -1,3 +1,9 @@
+## 0.1.6
+
+- Retry is now available immediately while a search is running.
+- Added a two-second cooldown between retry clicks to prevent repeated requests.
+- Removed the stalled-search waiting period and updated search status messages.
+
 ## 0.1.5
 
 - Added a sortable Zone column showing the player or group leader's reported location.

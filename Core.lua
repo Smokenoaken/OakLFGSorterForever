@@ -11,36 +11,25 @@ local events = {
 
 -- Keep recovery state in Oak, never force Blizzard's searching flag off.
 function Oak.IsSearching()
-    if Oak.searchTimedOut then return false end
     return Oak.retryPending or (LFGBrowseFrame and LFGBrowseFrame.searching)
 end
 
-function Oak.WatchSearch()
-    if Oak.searchTimer or not Oak.IsSearching() then return end
-    Oak.searchTimer = C_Timer.NewTimer(20, function()
-        Oak.searchTimer = nil
-        if Oak.IsSearching() then
-            Oak.searchTimedOut = true
-            Oak.retryPending = nil
-            Oak.Render()
-        end
-    end)
-end
-
 function Oak.FinishSearch()
-    if Oak.searchTimer then Oak.searchTimer:Cancel(); Oak.searchTimer = nil end
-    Oak.searchTimedOut, Oak.retryPending = nil, nil
+    Oak.retryPending = nil
 end
 
 function Oak.Search()
-    if Oak.IsSearching() then return end
-    if not Oak.searchTimedOut then LFGBrowse_DoSearch(); return end
+    if Oak.retryCooldown then return end
+    if not Oak.IsSearching() then LFGBrowse_DoSearch(); return end
     local category = LFGBrowseFrame.CategoryDropdown:GetValue()
     if category <= 0 then return end
     local activities = LFGBrowseFrame.ActivityDropdown.selectedValues
     if #activities == 0 then activities = LFGUtil_GetFilteredActivities(category) end
-    Oak.searchTimedOut, Oak.retryPending = nil, true
-    Oak.WatchSearch()
+    Oak.retryPending = true
+    Oak.retryCooldown = C_Timer.NewTimer(2, function()
+        Oak.retryCooldown = nil
+        Oak.Render()
+    end)
     C_LFGList.Search(category, 0, 0, nil, false, nil, activities)
     Oak.Render()
 end
@@ -102,7 +91,6 @@ end
 function Oak.OnShow()
     for _, event in ipairs(events) do Oak.frame:RegisterEvent(event) end
     Oak.RefreshResults()
-    Oak.WatchSearch()
 end
 
 function Oak.OnHide()
@@ -157,7 +145,6 @@ function Oak.EnsureUI()
     Oak.groupCount, Oak.playerCount = 0, 0
     Oak.BuildUI()
     hooksecurefunc("LFGBrowse_DoSearch", function()
-        Oak.WatchSearch()
         if Oak.frame:IsShown() then
             Oak.selected = nil
             Oak.Render()

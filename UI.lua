@@ -576,8 +576,8 @@ function Oak.Render()
     frame.activity.label:SetText(activity and LFGUtil_GetActivityInfoName(activity) or #activities > 1 and #activities .. " activities" or "All activities")
     frame.category:SetEnabled(not searching)
     frame.activity:SetEnabled(not searching and category > 0)
-    frame.refresh:SetEnabled(not searching and category > 0)
-    frame.refresh.label:SetText(searching and "Searching..." or Oak.searchTimedOut and "Retry" or "Refresh")
+    frame.refresh:SetEnabled(not Oak.retryCooldown and category > 0)
+    frame.refresh.label:SetText(searching and "Retry" or "Refresh")
     frame.zone.label:SetText(Oak.filters.myZone and "My zone" or Oak.filters.zone or "All zones")
     for key, button in pairs(frame.kindButtons) do Selected(button, Oak.filters.kind == key) end
     for key, button in pairs(frame.roleButtons) do Selected(button, Oak.filters.role == key) end
@@ -596,8 +596,7 @@ function Oak.Render()
         or #Oak.results > 0 and "No listings match your filters." or "No listings found. Click Refresh to search again.")
     local status = string.format("%d shown / %d loaded | %d groups, %d players", #Oak.visible, #Oak.results, Oak.groupCount, Oak.playerCount)
     if Oak.filters.friendly then status = status .. " | New-player friendly" end
-    if searching then status = "Searching... previous results shown"
-    elseif Oak.searchTimedOut then status = "Search timed out. Click Retry to search again."
+    if searching then status = Oak.retryCooldown and "Searching... retry available shortly." or "Searching... click Retry if the search stalls."
     elseif LFGBrowseFrame.searchFailed then status = "Search failed. Previous results shown; click Refresh to retry." end
     frame.status:SetText(status)
     local selected = not searching and Oak.GetActionInfo(Oak.selected)
