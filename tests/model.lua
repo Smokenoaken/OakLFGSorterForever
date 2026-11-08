@@ -164,5 +164,50 @@ Oak.OnEvent(nil, "LFG_LIST_SEARCH_FAILED")
 check(not Oak.IsSearching() and Oak.retryCooldown, "failure clears pending search but preserves click cooldown")
 timerCallback()
 check(not Oak.retryCooldown, "cooldown expires after completion")
+-- Native search helpers and dropdown writes would taint subsequent Blizzard updates.
+local function nativeWrite() error("Oak must not mutate Blizzard search state") end
+LFGBrowse_DoSearch = nativeWrite
+LFGBrowseCategoryButton_OnClick = nativeWrite
+LFGBrowseFrame.SearchActiveEntry = nativeWrite
+LFGBrowseFrame.CategoryDropdown.SetValue = nativeWrite
+LFGBrowseFrame.ActivityDropdown.ValueReset = nativeWrite
+LFGBrowseFrame.ActivityDropdown.ValueToggleSelected = nativeWrite
+local lastCategory, lastActivities
+C_LFGList.Search = function(category, _, _, _, _, _, activities)
+    lastCategory, lastActivities = category, activities
+    searchCalls = searchCalls + 1
+end
+LFGUtil_GetFilteredActivities = function() return {7, 8} end
+local function completeSearch()
+    Oak.OnEvent(nil, "LFG_LIST_SEARCH_RESULTS_RECEIVED")
+    timerCallback()
+end
+Oak.selected = 2
+Oak.Search()
+check(searchCalls == 3 and Oak.retryPending and not LFGBrowseFrame.searching,
+    "idle refresh submits directly without writing native searching flag")
+check(Oak.selected == nil and Oak.searchFailed == false, "new search clears selection and prior failure")
+completeSearch()
+Oak.SelectCategory(3)
+check(lastCategory == 3 and #lastActivities == 2 and #Oak.GetActivities() == 0,
+    "category selection searches all available activities")
+check(LFGBrowseFrame.CategoryDropdown:GetValue() == 2
+    and LFGBrowseFrame.ActivityDropdown.selectedValues[1] == 7, "native dropdowns stay unchanged")
+completeSearch()
+Oak.SelectActivity(8)
+check(#lastActivities == 1 and lastActivities[1] == 8, "activity selection searches chosen activity")
+Oak.SelectActivity(7)
+check(#Oak.GetActivities() == 1, "pending search locks activity selection")
+completeSearch()
+Oak.SelectActivity(8)
+check(#Oak.GetActivities() == 0 and #lastActivities == 2, "last activity toggles back to all")
+completeSearch()
+C_LFGList.GetActiveEntryInfo = function() return {activityIDs = {7, 8, 9}} end
+C_LFGList.GetActivityInfoTable = function(id) return {categoryID = id == 9 and 4 or 3} end
+Oak.SearchActiveEntry()
+check(lastCategory == 3 and #lastActivities == 2, "own listing searches its first category")
+check(LFGBrowseFrame.ActivityDropdown.selectedValues[1] == 7
+    and #LFGBrowseFrame.ActivityDropdown.selectedValues == 1, "own listing does not modify native activities")
+completeSearch()
 print(string.format("PASS: %d Forever model, action, and lifecycle checks", checks))
 

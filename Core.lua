@@ -9,7 +9,52 @@ local events = {
     "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS",
 }
 
--- Keep recovery state in Oak, never force Blizzard's searching flag off.
+-- Read native selections until Oak has its own; never write Blizzard's controls.
+function Oak.GetCategory()
+    return Oak.category or LFGBrowseFrame.CategoryDropdown:GetValue()
+end
+
+function Oak.GetActivities()
+    return Oak.activities or LFGBrowseFrame.ActivityDropdown.selectedValues
+end
+
+function Oak.SelectCategory(category)
+    if Oak.IsSearching() or Oak.retryCooldown then return end
+    Oak.category, Oak.activities = category, {}
+    Oak.Search()
+end
+
+function Oak.SelectActivity(activity)
+    if Oak.IsSearching() or Oak.retryCooldown then return end
+    local selected = {}
+    if activity then
+        local found = false
+        for _, id in ipairs(Oak.GetActivities()) do
+            if id == activity then found = true else selected[#selected + 1] = id end
+        end
+        if not found then selected[#selected + 1] = activity end
+    end
+    Oak.activities = selected
+    Oak.Search()
+end
+
+function Oak.SearchActiveEntry()
+    if Oak.IsSearching() or Oak.retryCooldown then return end
+    local entry = C_LFGList.GetActiveEntryInfo()
+    if not entry then return end
+    local category, activities = nil, {}
+    for _, id in ipairs(entry.activityIDs) do
+        local info = C_LFGList.GetActivityInfoTable(id)
+        if info then
+            category = category or info.categoryID
+            if info.categoryID == category then activities[#activities + 1] = id end
+        end
+    end
+    if not category then return end
+    Oak.category, Oak.activities = category, activities
+    Oak.Search()
+end
+
 function Oak.IsSearching()
     return Oak.retryPending or (LFGBrowseFrame and LFGBrowseFrame.searching)
 end
@@ -20,12 +65,11 @@ end
 
 function Oak.Search()
     if Oak.retryCooldown then return end
-    if not Oak.IsSearching() then LFGBrowse_DoSearch(); return end
-    local category = LFGBrowseFrame.CategoryDropdown:GetValue()
+    local category = Oak.GetCategory()
     if category <= 0 then return end
-    local activities = LFGBrowseFrame.ActivityDropdown.selectedValues
+    local activities = Oak.GetActivities()
     if #activities == 0 then activities = LFGUtil_GetFilteredActivities(category) end
-    Oak.retryPending = true
+    Oak.retryPending, Oak.searchFailed, Oak.selected = true, false, nil
     Oak.retryCooldown = C_Timer.NewTimer(2, function()
         Oak.retryCooldown = nil
         Oak.Render()
@@ -71,6 +115,7 @@ function Oak.OnEvent(_, event, id)
     end
     if event == "LFG_LIST_SEARCH_RESULTS_RECEIVED" or event == "LFG_LIST_SEARCH_FAILED" then
         Oak.FinishSearch()
+        Oak.searchFailed = event == "LFG_LIST_SEARCH_FAILED"
     end
     if event == "LFG_LIST_SEARCH_RESULTS_RECEIVED" then
         Oak.RefreshResults()

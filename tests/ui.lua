@@ -132,6 +132,23 @@ Oak.ShowOptions(Oak.frame)
 check(menuItems["Open with Blizzard's browser"]~=nil,"options menu constructed")
 Oak.ShowCategoryMenu(Oak.frame)
 check(menuItems.Dungeons~=nil,"native categories available")
+local selectedCategory, selectedActivity, ownSearch
+Oak.SelectCategory = function(id) selectedCategory = id end
+Oak.SelectActivity = function(id) selectedActivity = id or "all" end
+Oak.SearchActiveEntry = function() ownSearch = true end
+menuItems.Dungeons()
+check(selectedCategory == 2, "category menu uses Oak selection")
+LFGBrowseFrame.CategoryDropdown.GetValue = function() return 2 end
+Oak.ShowActivityMenu(Oak.frame)
+menuItems["Blackfathom Deeps"]()
+check(selectedActivity == 7, "activity menu uses Oak selection")
+menuItems["All activities"]()
+check(selectedActivity == "all", "all activities uses Oak selection")
+C_LFGList.HasActiveEntryInfo = function() return true end
+Oak.ShowCategoryMenu(Oak.frame)
+menuItems["Your listing"]()
+check(ownSearch, "own listing menu uses Oak search")
+C_LFGList.HasActiveEntryInfo = function() return false end
 Oak.ShowZoneMenu(Oak.frame.zone)
 check(menuItems["All zones"] and menuItems["My zone"], "zone menu constructed")
 menuItems["My zone"]()

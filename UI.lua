@@ -86,21 +86,20 @@ local function Selected(button, active)
 end
 
 function Oak.ShowCategoryMenu(owner)
-    if LFGBrowseFrame.searching then return end
+    if Oak.IsSearching() then return end
     MenuUtil.CreateContextMenu(owner, function(_, menu)
         menu:CreateTitle("Category")
         if C_LFGList.HasActiveEntryInfo() then
-            menu:CreateButton("Your listing", function() LFGBrowseFrame:SearchActiveEntry() end)
+            menu:CreateButton("Your listing", Oak.SearchActiveEntry)
         end
         for _, id in ipairs(C_LFGList.GetAvailableCategories()) do
             if #LFGUtil_GetFilteredActivities(id) > 0 then
                 local info = C_LFGList.GetLfgCategoryInfo(id)
                 if info then
-                    menu:CreateRadio(info.name, function() return LFGBrowseFrame.CategoryDropdown:GetValue() == id end,
+                    menu:CreateRadio(info.name, function() return Oak.GetCategory() == id end,
                         function()
-                            if LFGBrowseFrame.searching then return end
-                            LFGBrowseFrame.CategoryDropdown:SetValue(id)
-                            LFGBrowseCategoryButton_OnClick()
+                            if Oak.IsSearching() then return end
+                            Oak.SelectCategory(id)
                         end)
                 end
             end
@@ -109,26 +108,27 @@ function Oak.ShowCategoryMenu(owner)
 end
 
 function Oak.ShowActivityMenu(owner)
-    if LFGBrowseFrame.searching then return end
-    local category = LFGBrowseFrame.CategoryDropdown:GetValue()
+    if Oak.IsSearching() then return end
+    local category = Oak.GetCategory()
     if category <= 0 then return end
     MenuUtil.CreateContextMenu(owner, function(_, menu)
         menu:CreateTitle("Activities")
         menu:SetScrollMode(360)
         menu:CreateButton("All activities", function()
-            if LFGBrowseFrame.searching then return end
-            LFGBrowseFrame.ActivityDropdown:ValueReset()
-            LFGBrowse_DoSearch()
+            if Oak.IsSearching() then return end
+            Oak.SelectActivity()
         end)
         for _, id in ipairs(LFGUtil_GetFilteredActivities(category)) do
             local info = C_LFGList.GetActivityInfoTable(id)
             if info then
                 menu:CreateCheckbox(LFGUtil_GetActivityInfoName(info), function()
-                    return LFGBrowseFrame.ActivityDropdown:ValueIsSelected(id)
+                    for _, selected in ipairs(Oak.GetActivities()) do
+                        if selected == id then return true end
+                    end
+                    return false
                 end, function()
-                    if LFGBrowseFrame.searching then return end
-                    LFGBrowseFrame.ActivityDropdown:ValueToggleSelected(id)
-                    LFGBrowse_DoSearch()
+                    if Oak.IsSearching() then return end
+                    Oak.SelectActivity(id)
                 end)
             end
         end
@@ -180,7 +180,7 @@ function Oak.ShowOptions(owner)
         menu:CreateCheckbox("Include activities outside suggested level", function()
             return GetCVarBool("disableSuggestedLevelActivityFilter")
         end, function()
-            if LFGBrowseFrame.searching then return end
+            if Oak.IsSearching() then return end
             SetCVar("disableSuggestedLevelActivityFilter", not GetCVarBool("disableSuggestedLevelActivityFilter"))
             Oak.Render()
         end)
@@ -336,14 +336,14 @@ local function MakeRow(parent, index)
         row.roleCounts[role] = count
     end
     row:SetScript("OnClick", function(self)
-        if not LFGBrowseFrame.searching and self.result and Oak.GetActionInfo(self.result.id) then
+        if not Oak.IsSearching() and self.result and Oak.GetActionInfo(self.result.id) then
             Oak.selected = Oak.selected ~= self.result.id and self.result.id or nil
             Oak.Render()
         end
     end)
     row:SetScript("OnDoubleClick", function(self)
         local result = self.result
-        if not result or LFGBrowseFrame.searching then return end
+        if not result or Oak.IsSearching() then return end
         Oak.selected = result.id
         if result.kind == "Group" then Oak.Whisper() else Oak.Invite() end
         Oak.Render()
@@ -567,10 +567,12 @@ function Oak.Render()
     local frame = Oak.frame
     if not frame or not frame:IsShown() then return end
     local searching = Oak.IsSearching()
-    local category = LFGBrowseFrame.CategoryDropdown:GetValue()
+    local searchFailed = Oak.searchFailed
+    if searchFailed == nil then searchFailed = LFGBrowseFrame.searchFailed end
+    local category = Oak.GetCategory()
     local info = category > 0 and C_LFGList.GetLfgCategoryInfo(category)
     frame.category.label:SetText(info and info.name or "Choose category")
-    local activities = LFGBrowseFrame.ActivityDropdown.selectedValues
+    local activities = Oak.GetActivities()
     LayoutColumns(frame, #activities == 1)
     local activity = #activities == 1 and C_LFGList.GetActivityInfoTable(activities[1])
     frame.activity.label:SetText(activity and LFGUtil_GetActivityInfoName(activity) or #activities > 1 and #activities .. " activities" or "All activities")
@@ -591,13 +593,13 @@ function Oak.Render()
     frame.scroll:SetValue(Oak.offset)
     frame.scroll:SetShown(#Oak.visible > ROWS)
     frame.empty:SetShown(#Oak.visible == 0)
-    frame.empty:SetText(searching and "Searching..." or LFGBrowseFrame.searchFailed and "Search failed. Click Refresh to try again."
+    frame.empty:SetText(searching and "Searching..." or searchFailed and "Search failed. Click Refresh to try again."
         or category == 0 and "Choose a category to find players and groups."
         or #Oak.results > 0 and "No listings match your filters." or "No listings found. Click Refresh to search again.")
     local status = string.format("%d shown / %d loaded | %d groups, %d players", #Oak.visible, #Oak.results, Oak.groupCount, Oak.playerCount)
     if Oak.filters.friendly then status = status .. " | New-player friendly" end
     if searching then status = Oak.retryCooldown and "Searching... retry available shortly." or "Searching... click Retry if the search stalls."
-    elseif LFGBrowseFrame.searchFailed then status = "Search failed. Previous results shown; click Refresh to retry." end
+    elseif searchFailed then status = "Search failed. Previous results shown; click Refresh to retry." end
     frame.status:SetText(status)
     local selected = not searching and Oak.GetActionInfo(Oak.selected)
     frame.selection:SetText(selected and selected.leaderName or "Select a listing")

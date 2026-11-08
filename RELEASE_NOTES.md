@@ -1,3 +1,3 @@
-- Retry is now available immediately while a search is running.
-- Added a two-second cooldown between retry clicks to prevent repeated requests.
-- Removed the stalled-search waiting period and updated search status messages.
+- Fixed a search-state taint path that could trigger Blizzard's secret numMembers warning when browse results refresh.
+- Category, activity, and own-listing searches now use Oak-owned selections without changing Blizzard's dropdowns or search flags.
+- Preserved search retry behavior and added regression coverage for native-state isolation.

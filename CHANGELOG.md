@@ -1,3 +1,9 @@
+## 0.1.7
+
+- Fixed a search-state taint path that could trigger Blizzard's secret numMembers warning when browse results refresh.
+- Category, activity, and own-listing searches now use Oak-owned selections without changing Blizzard's dropdowns or search flags.
+- Preserved search retry behavior and added regression coverage for native-state isolation.
+
 ## 0.1.6
 
 - Retry is now available immediately while a search is running.
