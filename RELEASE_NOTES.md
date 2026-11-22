@@ -1,3 +1,4 @@
-- Fixed a search-state taint path that could trigger Blizzard's secret numMembers warning when browse results refresh.
-- Category, activity, and own-listing searches now use Oak-owned selections without changing Blizzard's dropdowns or search flags.
-- Preserved search retry behavior and added regression coverage for native-state isolation.
+- Added Need Tank, Need Healer, and Need DPS filters using Blizzard's reported remaining role slots.
+- Combine group conditions such as Has Tank and Need Healer; groups must match every selected condition.
+- Players retain independent Any role, Tank, Healer, and DPS filters. Switching views preserves each selection.
+- Clear filters resets both player and group role selections.

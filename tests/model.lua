@@ -54,7 +54,7 @@ info[3] = { leaderName = "Me", numMembers = 1, activityIDs = {7}, hasSelf = true
 info[4] = { leaderName = "Gone", numMembers = 1, isDelisted = true }
 local solo, group, self = Oak.ReadResult(1), Oak.ReadResult(2), Oak.ReadResult(3)
 GetRealZoneText = function() return "Ashenvale" end
-local zoneFilters = { kind = "All", role = "ALL", text = "", myZone = true }
+local zoneFilters = { kind = "All", roles = {}, text = "", myZone = true }
 check(solo.zone == "Ashenvale" and group.zone == "Orgrimmar" and self.zone == "", "zones use player or leader with unknown fallback")
 check(Oak.Matches(solo, zoneFilters) and not Oak.Matches(group, zoneFilters), "my zone filters by reported location")
 local unknownZone = Oak.ReadResult(1)
@@ -74,14 +74,59 @@ check(group.kind == "Group" and group.roles.DAMAGER == 2 and group.level == 0, "
 check(solo.activity == "Blackfathom Deeps" and solo.style == "Relaxed", "native activity and style")
 check(self.level == 0 and self.class == nil, "missing player info accepted")
 check(Oak.ReadResult(4) == nil and Oak.ReadResult(999) == nil, "delisted and missing results excluded")
-local filters = { kind = "All", role = "ALL", text = "100%", friendly = false }
+local filters = { kind = "All", roles = {}, text = "100%", friendly = false }
 check(Oak.Matches(solo, filters), "literal search accepts percent")
 filters.text = "BLACKFATHOM"
 check(Oak.Matches(solo, filters), "search case-insensitive")
 filters.text, filters.kind = "", "Group"
 check(not Oak.Matches(solo, filters) and Oak.Matches(group, filters), "mixed listing type filter")
-filters.kind, filters.role = "All", "HEALER"
+filters.kind, filters.roles = "All", { HEALER = true }
 check(Oak.Matches(solo, filters) and not Oak.Matches(group, filters), "role filter distinguishes multi-role solo from group")
+counts[2].TANK_REMAINING, counts[2].HEALER_REMAINING, counts[2].DAMAGER_REMAINING = 0, 1, 1
+for _, role in ipairs({"TANK", "HEALER", "DAMAGER"}) do
+    filters.roles = { [role .. "_REMAINING"] = true }
+    check(Oak.Matches(group, filters) == (role ~= "TANK"), "remaining slots for " .. role)
+    check(not Oak.Matches(solo, filters), "need role excludes solo " .. role)
+    check(Oak.Matches(self, filters), "need role preserves own listing " .. role)
+end
+filters.roles = { HEALER_REMAINING = true }
+counts[2].HEALER_REMAINING = 0
+check(not Oak.Matches(Oak.ReadResult(2), filters), "filled vacancy excluded even when existing healer count is zero")
+counts[2].HEALER_REMAINING = nil
+check(not Oak.Matches(Oak.ReadResult(2), filters), "missing vacancy excluded")
+local savedCounts = counts[2]
+counts[2] = nil
+check(not Oak.Matches(Oak.ReadResult(2), filters), "missing member data excluded")
+counts[2] = savedCounts
+counts[2].HEALER_REMAINING = 1
+filters.roles = { TANK = true, HEALER_REMAINING = true }
+check(Oak.Matches(group, filters), "has tank and needs healer match together")
+filters.roles.DAMAGER_REMAINING = true
+check(Oak.Matches(group, filters), "three role conditions can match together")
+filters.roles.HEALER = true
+check(not Oak.Matches(group, filters), "every selected condition must match")
+local opposite = Oak.ReadResult(2)
+opposite.roles.TANK, opposite.roles.HEALER = 0, 1
+opposite.memberCounts = { TANK_REMAINING = 1, HEALER_REMAINING = 0 }
+filters.roles = { HEALER = true, TANK_REMAINING = true }
+check(Oak.Matches(opposite, filters) and not Oak.Matches(group, filters), "has healer and needs tank")
+check(Oak.Matches(self, filters), "own listing preserved with combined filters")
+filters.kind, filters.playerRole = "Player", "TANK"
+check(Oak.Matches(solo, filters), "player tank ignores group need and has filters")
+filters.playerRole = "HEALER"
+check(Oak.Matches(solo, filters), "player healer uses advertised roles")
+filters.playerRole = "DAMAGER"
+check(not Oak.Matches(solo, filters), "player DPS excludes non-DPS")
+local dps = Oak.ReadResult(1)
+dps.roles = { TANK = 0, HEALER = 0, DAMAGER = 1 }
+check(Oak.Matches(dps, filters), "player DPS matches despite retained group conditions")
+check(not Oak.Matches(group, filters), "player mode excludes groups")
+filters.playerRole = "ALL"
+check(Oak.Matches(solo, filters) and Oak.Matches(dps, filters), "any player role")
+filters.kind = "Group"
+check(Oak.Matches(opposite, filters) and not Oak.Matches(group, filters), "returning to groups restores combined conditions")
+filters.kind = "All"
+filters.roles = { HEALER = true }
 filters.text, filters.friendly = "nonmatching", true
 check(Oak.Matches(self, filters), "own listing always visible")
 check(not Oak.Matches(solo, filters), "friendly filter excludes other listings")
@@ -114,12 +159,23 @@ check(whispered == nil, "revalidate target at click")
 info[2].isDelisted = false
 Oak.Render = function() end
 Oak.results, Oak.visible = {}, {}
-Oak.filters = { kind = "All", role = "ALL", text = "", friendly = false }
+Oak.filters = { kind = "All", roles = {}, text = "", friendly = false }
 Oak.sortKey, Oak.descending, Oak.offset = "name", false, 0
 ids = {1,2,3,4}
 Oak.RefreshResults()
 check(#Oak.results == 3 and #Oak.visible == 3, "mixed native result refresh")
 check(Oak.groupCount == 1 and Oak.playerCount == 1, "counts exclude own listing")
+Oak.filters.roles = { HEALER_REMAINING = true }
+Oak.Refilter()
+check(Oak.groupCount == 1 and Oak.playerCount == 0, "need healer filters refreshed listings")
+counts[2].HEALER_REMAINING = 0
+Oak.selected = 2
+Oak.OnEvent(nil, "LFG_LIST_SEARCH_RESULT_UPDATED", 2)
+check(Oak.groupCount == 0 and Oak.selected == nil, "filled role update removes group and selection")
+counts[2].HEALER_REMAINING = 1
+Oak.OnEvent(nil, "LFG_LIST_SEARCH_RESULT_UPDATED", 2)
+check(Oak.groupCount == 1, "reopened vacancy returns group")
+Oak.filters.roles = {}
 Oak.filters.kind = "Player"
 Oak.Refilter()
 check(#Oak.visible == 2 and Oak.selected == nil, "filter clears hidden selection")

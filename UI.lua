@@ -18,6 +18,40 @@ local columns = {
     { key = "note", label = "Note / Style", x = 525, width = 97 },
 }
 
+local roleLabels = {
+    ALL = "Any role", TANK = "Has Tank", HEALER = "Has Healer", DAMAGER = "Has DPS",
+    TANK_REMAINING = "Need Tank", HEALER_REMAINING = "Need Healer", DAMAGER_REMAINING = "Need DPS",
+}
+
+local playerRoleLabels = { ALL = "Any role", TANK = "Tank", HEALER = "Healer", DAMAGER = "DPS" }
+
+local roleOrder = { "TANK", "HEALER", "DAMAGER", "TANK_REMAINING", "HEALER_REMAINING", "DAMAGER_REMAINING" }
+
+function Oak.ShowRoleMenu(owner)
+    MenuUtil.CreateContextMenu(owner, function(_, menu)
+        if Oak.filters.kind == "Player" then
+            for _, role in ipairs({ "ALL", "TANK", "HEALER", "DAMAGER" }) do
+                menu:CreateRadio(playerRoleLabels[role], function() return Oak.filters.playerRole == role end, function()
+                    Oak.filters.playerRole = role
+                    Oak.Refilter()
+                end)
+            end
+            return
+        end
+        menu:CreateRadio("Any role", function() return not next(Oak.filters.roles) end, function()
+            wipe(Oak.filters.roles)
+            Oak.Refilter()
+        end)
+        for _, role in ipairs(roleOrder) do
+            menu:CreateCheckbox(roleLabels[role], function() return Oak.filters.roles[role] end, function()
+                Oak.filters.roles[role] = not Oak.filters.roles[role] or nil
+                if Oak.filters.roles[role] and role:find("_REMAINING", 1, true) then Oak.filters.kind = "Group" end
+                Oak.Refilter()
+            end)
+        end
+    end)
+end
+
 local function Text(parent, size)
     local fs = parent:CreateFontString(nil, "OVERLAY")
     fs:SetFont(FONT, size or 11, "")
@@ -410,24 +444,11 @@ function Oak.BuildUI()
             Oak.Refilter()
         end)
     end
-    frame.roleButtons = {}
-    for index, role in ipairs({ "ALL", "TANK", "HEALER", "DAMAGER" }) do
-        local labels = { ALL = "Any role", TANK = "Tank", HEALER = "Healer", DAMAGER = "DPS" }
-        frame.roleButtons[role] = Button(frame, labels[role], 64, 236 + (index - 1) * 68, -76, function()
-            Oak.filters.role = role
-            Oak.Refilter()
-        end)
-        if Oak.roleAtlases[role] then
-            local button = frame.roleButtons[role]
-            local icon = button:CreateTexture(nil, "ARTWORK")
-            icon:SetSize(14, 14)
-            icon:SetPoint("LEFT", 6, 0)
-            icon:SetAtlas(Oak.roleAtlases[role])
-            button.label:SetPoint("LEFT", 22, 0)
-        end
-    end
-    Button(frame, "Clear filters", 136, 508, -76, function()
-        Oak.filters.kind, Oak.filters.role, Oak.filters.friendly = "All", "ALL", false
+    frame.role = Button(frame, "Any role", 264, 236, -76, Oak.ShowRoleMenu)
+    Dropdown(frame.role)
+    frame.clearFilters = Button(frame, "Clear filters", 136, 508, -76, function()
+        Oak.filters.kind, Oak.filters.friendly, Oak.filters.playerRole = "All", false, "ALL"
+        wipe(Oak.filters.roles)
         Oak.filters.zone, Oak.filters.myZone = nil, nil
         wipe(Oak.filters.classes); wipe(Oak.filters.armor)
         frame.search:SetText("")
@@ -582,7 +603,19 @@ function Oak.Render()
     frame.refresh.label:SetText(searching and "Retry" or "Refresh")
     frame.zone.label:SetText(Oak.filters.myZone and "My zone" or Oak.filters.zone or "All zones")
     for key, button in pairs(frame.kindButtons) do Selected(button, Oak.filters.kind == key) end
-    for key, button in pairs(frame.roleButtons) do Selected(button, Oak.filters.role == key) end
+    if Oak.filters.kind == "Player" then
+        frame.role.label:SetText(playerRoleLabels[Oak.filters.playerRole])
+        Selected(frame.role, Oak.filters.playerRole ~= "ALL")
+    else
+        local selectedRoles = {}
+        for _, role in ipairs(roleOrder) do
+            if Oak.filters.roles[role] then selectedRoles[#selectedRoles + 1] = roleLabels[role] end
+        end
+        frame.role.label:SetText(#selectedRoles == 0 and "Any role"
+            or #selectedRoles <= 2 and table.concat(selectedRoles, " + ")
+            or #selectedRoles .. " role filters")
+        Selected(frame.role, #selectedRoles > 0)
+    end
     for key, button in pairs(frame.headers) do Selected(button, Oak.sortKey == key) end
     if Oak.classArmorPanel then
         for class, cb in pairs(Oak.classArmorPanel.classChecks) do cb:SetChecked(Oak.filters.classes[class] or false) end

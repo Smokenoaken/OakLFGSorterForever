@@ -32,7 +32,15 @@ one is missing.
 - Choose a category and one or more activities, then browse the results.
 - All / Groups / Players filters share one list. Your listing stays pinned first.
 - Click column headings to sort; click again to reverse. Scroll for more rows.
-- Role filters match a player's advertised roles or roles already in a group.
+- In Players, the role dropdown offers Any role / Tank / Healer / DPS and matches
+  each player's advertised roles. Group role conditions do not apply in Players.
+  Player and group role selections are kept separately when switching views.
+- In All or Groups, the role dropdown offers Has Tank / Has Healer / Has DPS for
+  roles already present. Need Tank / Need Healer / Need DPS switches
+  to Groups and matches Blizzard's reported remaining slots for that role.
+  Missing vacancy data does not count as an opening. Your own listing stays pinned.
+  Select multiple checkboxes to require every condition, such as Has Tank plus
+  Need Healer. Any role clears all role selections; Clear filters resets all filters.
 - The text box filters loaded names, activities, notes, and playstyles.
 - Select a listing and click Whisper to open an unsent chat draft.
 - Invite is available for eligible solo listings, subject to native permissions,
@@ -49,7 +57,7 @@ move it. Escape closes it when the search box does not have keyboard focus.
 ## Installation
 
 Place the `OakLFGSorterForever` folder in:
-`World of Warcraft/_classic_beta_/Interface/AddOns/`.
+`World of Warcraft/_forever_/Interface/AddOns/`.
 
 Enable **OAK LFG Sorter - Forever** in the AddOns list. Reload the UI; if the new
 addon is not listed, restart the client. This has its own SavedVariables and
@@ -72,8 +80,8 @@ both API tokens and an existing release tag; it does not run automatically.
 ## Validation
 
 - Lua 5.1 syntax checked for the addon files.
-- 32 data/action/lifecycle checks passed with mocked WoW APIs.
-- 16 UI startup/menu/scroll/state checks passed with mocked frames.
+- 89 data/action/lifecycle checks passed with mocked WoW APIs.
+- 58 UI startup/menu/scroll/state checks passed with mocked frames.
 - The browser has been shown in-game on Forever. Automated checks use mocked
   game APIs and do not establish server invitation behavior or taint safety.
 

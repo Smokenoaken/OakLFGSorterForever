@@ -38,7 +38,7 @@ function Oak.ReadResult(id)
         zone = player and player.areaName or "",
         size = info.numMembers, kind = solo and "Player" or "Group",
         activity = table.concat(activities, ", "), note = info.comment or "",
-        style = style or "", age = info.age or 0, roles = roles,
+        style = style or "", age = info.age or 0, roles = roles, memberCounts = counts,
         hasSelf = info.hasSelf, friendly = info.newPlayerFriendly,
     }
     result.searchText = string.lower(table.concat({ result.name, result.activity, result.note, result.style, result.zone }, " "))
@@ -48,7 +48,19 @@ end
 function Oak.Matches(result, filters)
     if not result.hasSelf then
         if filters.kind ~= "All" and filters.kind ~= result.kind then return false end
-        if filters.role ~= "ALL" and result.roles[filters.role] == 0 then return false end
+        if filters.kind == "Player" then
+            local role = filters.playerRole
+            if role and role ~= "ALL" and (result.roles[role] or 0) == 0 then return false end
+        elseif filters.roles then
+            for role in pairs(filters.roles) do
+                if result.roles[role] ~= nil then
+                    if result.roles[role] == 0 then return false end
+                elseif result.kind ~= "Group" or not result.memberCounts
+                    or (result.memberCounts[role] or 0) <= 0 then
+                    return false
+                end
+            end
+        end
         if filters.classes and next(filters.classes) and not filters.classes[result.class] then return false end
         if filters.armor and next(filters.armor) and not filters.armor[result.armor] then return false end
         if filters.friendly and not result.friendly then return false end

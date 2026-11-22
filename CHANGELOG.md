@@ -1,3 +1,10 @@
+## 0.1.8
+
+- Added Need Tank, Need Healer, and Need DPS filters using Blizzard's reported remaining role slots.
+- Combine group conditions such as Has Tank and Need Healer; groups must match every selected condition.
+- Players retain independent Any role, Tank, Healer, and DPS filters. Switching views preserves each selection.
+- Clear filters resets both player and group role selections.
+
 ## 0.1.7
 
 - Fixed a search-state taint path that could trigger Blizzard's secret numMembers warning when browse results refresh.
